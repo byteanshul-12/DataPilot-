@@ -1,9 +1,10 @@
 # Backend - DataPilot
 
-/ FastAPI REST API service with Celery background task worker support.
+/ Node.js Express REST API server with BullMQ job worker and Drizzle ORM integration.
 
 ## Commands
 
-- `pip install -r requirements.txt` - Install Python dependencies
-- `uvicorn main:app --reload` - Run FastAPI development server
-- `celery -A app.core.celery_app worker --loglevel=info` - Run Celery task worker
+- `npm install` - Install Node.js dependencies
+- `npm run dev` - Start Express server in development mode
+- `npm run worker` - Start BullMQ background job worker
+- `npm run build` - Compile TypeScript to JavaScript

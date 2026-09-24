@@ -4,17 +4,17 @@ AI-powered data intelligence platform for natural language data collection workf
 
 ## Project Structure
 
-/ Root project directory layout for service components.
+/ Root project directory layout for Node.js fullstack service components.
 
 - `frontend/` - React + Vite + TypeScript web interface
-- `backend/` - FastAPI REST API and Celery background task processing
+- `backend/` - Node.js + Express + TypeScript REST API with BullMQ background worker
 - `ai/` - LangGraph AI orchestration, web scrapers, and LLM integrations
 - `db/` - Drizzle ORM database schemas and migration management
 
 ## Tech Stack
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Zustand, Recharts
-- Backend: FastAPI, REST API, Pydantic, Celery, Redis, Pandas, RapidFuzz
+- Backend: Node.js, Express, TypeScript, Zod, BullMQ, Redis, RapidFuzz
 - AI: LangGraph, Gemini, OpenAI, Tavily, Firecrawl, Playwright, BeautifulSoup
 - Database: PostgreSQL, Drizzle ORM
 - Authentication: Clerk
