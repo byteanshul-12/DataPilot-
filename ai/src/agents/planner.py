@@ -1,4 +1,4 @@
-# Gemini and OpenAI prompt-driven requirement planning agent.
+# Gemini and OpenAI prompt-driven requirement planning agent. jo karna hai  vo karo betichod
 import os
 
 def create_planner_agent(provider: str = "gemini"):
