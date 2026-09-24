@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+.next/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# IDE and OS files
+.DS_Store
+.vscode/
+.idea/
+
+# Logs and coverage
+*.log
+npm-debug.log*
+yarn-debug.log*
+coverage/
+.pytest_cache/
+
+# Playwright
+test-results/
+playwright-report/
