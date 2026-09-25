@@ -1,0 +1,256 @@
+[
+  {
+    "instruction": "Find 100 Indian SaaS startups founded after 2022 with company name, founder, website, funding stage and LinkedIn URL.",
+    "output": {
+      "intent": "find_saas_startups",
+      "target_count": 100,
+      "entity_type": "company",
+      "filters": {
+        "country": "India",
+        "industry": "SaaS",
+        "founded_after": 2022
+      },
+      "fields": [
+        "company_name",
+        "founder",
+        "website",
+        "funding_stage",
+        "linkedin_url"
+      ],
+      "source_types": [
+        "company_website",
+        "linkedin",
+        "startup_database",
+        "news"
+      ],
+      "deduplication_key": [
+        "company_name",
+        "website"
+      ],
+      "validation_rules": [
+        "company_name_required",
+        "website_valid_url",
+        "linkedin_url_valid_url"
+      ]
+    }
+  },
+  {
+    "instruction": "Extract 50 remote Senior React Developer jobs posted in the last 7 days with job title, company name, location, salary range and application link.",
+    "output": {
+      "intent": "extract_developer_jobs",
+      "target_count": 50,
+      "entity_type": "job",
+      "filters": {
+        "role": "Senior React Developer",
+        "remote": true,
+        "posted_within_days": 7
+      },
+      "fields": [
+        "job_title",
+        "company_name",
+        "location",
+        "salary_range",
+        "application_link"
+      ],
+      "source_types": [
+        "job_board",
+        "company_careers_page"
+      ],
+      "deduplication_key": [
+        "company_name",
+        "job_title"
+      ],
+      "validation_rules": [
+        "job_title_required",
+        "company_name_required",
+        "application_link_valid_url"
+      ]
+    }
+  },
+  {
+    "instruction": "Find 200 B2B VP of Sales leads in North America healthcare companies with full name, title, company, email and LinkedIn profile.",
+    "output": {
+      "intent": "find_sales_leads",
+      "target_count": 200,
+      "entity_type": "lead",
+      "filters": {
+        "title_keyword": "VP of Sales",
+        "industry": "Healthcare",
+        "region": "North America"
+      },
+      "fields": [
+        "full_name",
+        "title",
+        "company",
+        "email",
+        "linkedin_profile"
+      ],
+      "source_types": [
+        "linkedin",
+        "company_directory"
+      ],
+      "deduplication_key": [
+        "email",
+        "linkedin_profile"
+      ],
+      "validation_rules": [
+        "full_name_required",
+        "email_valid_email"
+      ]
+    }
+  },
+  {
+    "instruction": "Collect 30 sponsors of European Tech Conferences in 2024 with sponsor name, tier level, website, and contact email.",
+    "output": {
+      "intent": "collect_conference_sponsors",
+      "target_count": 30,
+      "entity_type": "sponsor",
+      "filters": {
+        "region": "Europe",
+        "category": "Tech Conferences",
+        "year": 2024
+      },
+      "fields": [
+        "sponsor_name",
+        "tier_level",
+        "website",
+        "contact_email"
+      ],
+      "source_types": [
+        "event_website",
+        "press_release"
+      ],
+      "deduplication_key": [
+        "sponsor_name",
+        "website"
+      ],
+      "validation_rules": [
+        "sponsor_name_required",
+        "website_valid_url"
+      ]
+    }
+  },
+  {
+    "instruction": "Find top 15 AI Developer Tools launched on ProductHunt in 2023 with product name, tagline, upvotes, maker and website.",
+    "output": {
+      "intent": "find_ai_tools",
+      "target_count": 15,
+      "entity_type": "product",
+      "filters": {
+        "category": "AI Developer Tools",
+        "platform": "ProductHunt",
+        "year": 2023
+      },
+      "fields": [
+        "product_name",
+        "tagline",
+        "upvotes",
+        "maker",
+        "website"
+      ],
+      "source_types": [
+        "producthunt",
+        "tech_blogs"
+      ],
+      "deduplication_key": [
+        "product_name"
+      ],
+      "validation_rules": [
+        "product_name_required",
+        "website_valid_url"
+      ]
+    }
+  },
+  {
+    "instruction": "Gather market research data on 40 D2C fashion brands in Southeast Asia with brand name, headquarters country, estimated revenue, primary channel and Instagram handle.",
+    "output": {
+      "intent": "market_research_d2c",
+      "target_count": 40,
+      "entity_type": "company",
+      "filters": {
+        "industry": "D2C Fashion",
+        "region": "Southeast Asia"
+      },
+      "fields": [
+        "brand_name",
+        "headquarters_country",
+        "estimated_revenue",
+        "primary_channel",
+        "instagram_handle"
+      ],
+      "source_types": [
+        "market_reports",
+        "company_website",
+        "social_media"
+      ],
+      "deduplication_key": [
+        "brand_name"
+      ],
+      "validation_rules": [
+        "brand_name_required"
+      ]
+    }
+  },
+  {
+    "instruction": "Identify 10 major competitors of Snowflake in cloud data warehousing with competitor name, key pricing model, enterprise features and main website.",
+    "output": {
+      "intent": "analyze_competitors",
+      "target_count": 10,
+      "entity_type": "competitor",
+      "filters": {
+        "target_competitor_of": "Snowflake",
+        "domain": "Cloud Data Warehousing"
+      },
+      "fields": [
+        "competitor_name",
+        "key_pricing_model",
+        "enterprise_features",
+        "main_website"
+      ],
+      "source_types": [
+        "analyst_reports",
+        "company_website"
+      ],
+      "deduplication_key": [
+        "competitor_name"
+      ],
+      "validation_rules": [
+        "competitor_name_required",
+        "main_website_valid_url"
+      ]
+    }
+  },
+  {
+    "instruction": "Find 25 global AI & Web3 developer hackathons taking place in Q4 2024 with event name, host organization, prize pool, location and registration URL.",
+    "output": {
+      "intent": "find_hackathons",
+      "target_count": 25,
+      "entity_type": "event",
+      "filters": {
+        "topics": ["AI", "Web3"],
+        "event_type": "hackathon",
+        "timeframe": "Q4 2024"
+      },
+      "fields": [
+        "event_name",
+        "host_organization",
+        "prize_pool",
+        "location",
+        "registration_url"
+      ],
+      "source_types": [
+        "devpost",
+        "event_pages",
+        "tech_news"
+      ],
+      "deduplication_key": [
+        "event_name",
+        "registration_url"
+      ],
+      "validation_rules": [
+        "event_name_required",
+        "registration_url_valid_url"
+      ]
+    }
+  }
+]
