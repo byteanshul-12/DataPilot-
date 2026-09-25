@@ -1,12 +1,10 @@
-# Playwright browser automation scraper for JS-rendered dynamic pages.
-from playwright.async_api import async_playwright
+"""Playwright browser automation scraper module."""
+from app.tools.browser import PlaywrightBrowserTool
 
 async def scrape_dynamic_page(url: str) -> str:
-    # Launches headless browser and extracts dynamic HTML content.
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        await page.goto(url)
-        content = await page.content()
-        await browser.close()
-        return content
+    """Launches headless browser and extracts dynamic HTML content."""
+    tool = PlaywrightBrowserTool()
+    res = await tool.scrape_url(url)
+    return res.get("raw_html", "") if res else ""
+
+__all__ = ["PlaywrightBrowserTool", "scrape_dynamic_page"]

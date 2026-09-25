@@ -1,10 +1,7 @@
-# LangGraph graph state schema for data collection pipeline.  ya thora issue kar skta hai to check kar lena 
-from typing import TypedDict, List, Dict, Any, Optional
+"""LangGraph state schema module re-exporting WorkflowState for backward compatibility."""
+from app.graph.state import WorkflowState
 
-class CollectionGraphState(TypedDict):
-    prompt: str
-    search_queries: List[str]
-    raw_sources: List[Dict[str, Any]]
-    extracted_data: List[Dict[str, Any]]
-    validated_data: List[Dict[str, Any]]
-    error: Optional[str]
+# Backward compatibility alias
+CollectionGraphState = WorkflowState
+
+__all__ = ["WorkflowState", "CollectionGraphState"]
