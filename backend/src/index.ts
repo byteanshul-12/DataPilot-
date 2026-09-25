@@ -1,13 +1,30 @@
 // Express REST API server bootstrap and route registrations.
 import express from 'express';
 import cors from 'cors';
+import { clerkMiddleware } from '@clerk/express';
 import { env } from './config/env.js';
 import { v1Router } from './api/v1/index.js';
+import { parseCookies } from './auth/cookie.js';
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.BACKEND_CORS_ORIGINS || 'http://localhost:5173',
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+
+// Attach parsed cookies to request object.
+app.use((req, _res, next) => {
+  req.cookies = parseCookies(req);
+  next();
+});
+
+// Clerk authentication middleware for processing JWT sessions.
+app.use(clerkMiddleware());
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
