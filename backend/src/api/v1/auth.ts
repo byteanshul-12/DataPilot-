@@ -2,7 +2,6 @@
 import { Router, Request, Response } from 'express';
 import { createGuestSession, clearGuestSession, validateGuestSession } from '../../auth/guest.js';
 import { requireAuth, getCurrentIdentity } from '../../auth/middleware.js';
-import { syncOrCreateClerkUser } from '../../auth/clerk.js';
 import { migrateGuestDataToUser } from '../../services/auth.js';
 import { parseCookies } from '../../auth/cookie.js';
 import { env } from '../../config/env.js';
@@ -48,26 +47,6 @@ authRouter.get('/me', getCurrentIdentity, async (req: Request, res: Response) =>
   });
 });
 
-authRouter.post('/sync-user', requireAuth, async (req: Request, res: Response) => {
-  try {
-    const userIdentity = req.authIdentity;
-    if (!userIdentity || userIdentity.type !== 'user') {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const user = await syncOrCreateClerkUser(userIdentity.clerkUserId);
-    return res.json({
-      success: true,
-      user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error: 'InternalServerError',
-      message: 'Failed to sync user with local database',
-    });
-  }
-});
-
 authRouter.post('/migrate-guest', requireAuth, async (req: Request, res: Response) => {
   try {
     const userIdentity = req.authIdentity;
@@ -85,7 +64,7 @@ authRouter.post('/migrate-guest', requireAuth, async (req: Request, res: Respons
       });
     }
 
-    const result = await migrateGuestDataToUser(guestId, userIdentity.clerkUserId);
+    const result = await migrateGuestDataToUser(guestId, userIdentity.userId);
     await clearGuestSession(res, guestId);
 
     return res.json(result);

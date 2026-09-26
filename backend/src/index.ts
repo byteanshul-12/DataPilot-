@@ -1,7 +1,8 @@
 // Express REST API server bootstrap and route registrations.
 import express from 'express';
 import cors from 'cors';
-import { clerkMiddleware } from '@clerk/express';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './auth/better-auth.js';
 import { env } from './config/env.js';
 import { v1Router } from './api/v1/index.js';
 import { parseCookies } from './auth/cookie.js';
@@ -23,8 +24,8 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Clerk authentication middleware for processing JWT sessions.
-app.use(clerkMiddleware());
+// Better Auth API route handler for authentication endpoints.
+app.all('/api/auth/*', toNodeHandler(auth));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });

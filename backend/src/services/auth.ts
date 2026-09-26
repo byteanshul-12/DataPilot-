@@ -1,11 +1,18 @@
 // Service for migrating anonymous guest session data to an authenticated user.
 import { eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { guestData, guestSessions, collectionTasks, users } from '../db/schema.js';
-import { syncOrCreateClerkUser } from '../auth/clerk.js';
+import { guestData, guestSessions, collectionTasks, user } from '../db/schema.js';
 
-export async function migrateGuestDataToUser(guestId: string, clerkUserId: string) {
-  const user = await syncOrCreateClerkUser(clerkUserId);
+export async function migrateGuestDataToUser(guestId: string, userId: string) {
+  const [existingUser] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (!existingUser) {
+    throw new Error('Target authenticated user not found');
+  }
 
   const existingGuestData = await db
     .select()
@@ -15,7 +22,7 @@ export async function migrateGuestDataToUser(guestId: string, clerkUserId: strin
   const migratedTasks = await db
     .update(collectionTasks)
     .set({
-      userId: user.id,
+      userId: existingUser.id,
       guestId: null,
     })
     .where(eq(collectionTasks.guestId, guestId))
@@ -26,8 +33,7 @@ export async function migrateGuestDataToUser(guestId: string, clerkUserId: strin
 
   return {
     success: true,
-    userId: user.id,
-    clerkUserId,
+    userId: existingUser.id,
     migratedTasksCount: migratedTasks.length,
     migratedDataRecordsCount: existingGuestData.length,
   };

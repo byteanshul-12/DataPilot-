@@ -1,8 +1,7 @@
 // Authentication identity types and request context declarations.
 export interface UserIdentity {
   type: 'user';
-  clerkUserId: string;
-  dbUserId?: string;
+  userId: string;
   email?: string;
   name?: string;
 }

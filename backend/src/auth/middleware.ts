@@ -1,13 +1,13 @@
-// Express middleware for Clerk authentication and guest session authorization.
+// Express middleware for Better Auth and guest session authorization.
 import { Request, Response, NextFunction } from 'express';
-import { getClerkIdentity } from './clerk.js';
+import { getBetterAuthIdentity } from './better-auth.js';
 import { validateGuestSession } from './guest.js';
 import { AuthIdentity } from './types.js';
 
 export async function resolveIdentity(req: Request): Promise<AuthIdentity> {
-  const clerkUser = await getClerkIdentity(req);
-  if (clerkUser) {
-    return clerkUser;
+  const authUser = await getBetterAuthIdentity(req);
+  if (authUser) {
+    return authUser;
   }
 
   const guestSession = await validateGuestSession(req);
@@ -30,15 +30,15 @@ export async function getCurrentIdentity(req: Request, _res: Response, next: Nex
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const clerkUser = await getClerkIdentity(req);
-    if (!clerkUser) {
+    const authUser = await getBetterAuthIdentity(req);
+    if (!authUser) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Authentication required. Please sign in.',
       });
     }
 
-    req.authIdentity = clerkUser;
+    req.authIdentity = authUser;
     next();
   } catch (error) {
     return res.status(401).json({
