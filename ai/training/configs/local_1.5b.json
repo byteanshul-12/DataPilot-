@@ -1,0 +1,12 @@
+{
+  "base_model_name": "Qwen/Qwen2.5-1.5B-Instruct",
+  "output_dir": "checkpoints/datapilot-qwen2.5-1.5b-lora",
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "target_modules": ["q_proj", "v_proj"],
+  "max_seq_length": 640,
+  "num_train_epochs": 3,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 0.0002,
+  "seed": 42
+}

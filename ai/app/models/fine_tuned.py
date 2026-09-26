@@ -51,14 +51,26 @@ class FineTunedHTTPModel(DataPilotModel):
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
+        system_prompt = (
+            "You are a DataPilot specialized AI. Convert the user data requirement into "
+            "only one valid JSON object matching this exact schema: "
+            '{"intent":"string","target_count":number,"entity_type":"company|job|lead|event|product|sponsor|competitor|other",'
+            '"filters":{},"fields":["field_name"],"source_types":["source_type"],'
+            '"deduplication_key":["field_name"],"validation_rules":["rule_name"]}. '
+            "Do not wrap the response in markdown. Do not add any top-level key except "
+            "intent, target_count, entity_type, filters, fields, source_types, "
+            "deduplication_key, and validation_rules."
+        )
+        plain_prompt = f"{system_prompt}\n\nUser requirement: {user_requirement}\n\nJSON:"
+
         # Standard vLLM / OpenAI-compatible / custom inference request payload
         payload = {
             "model": self.model_name,
-            "prompt": user_requirement,
+            "prompt": plain_prompt,
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are a DataPilot specialized AI. Convert the user data requirement into a valid JSON workflow specification."
+                    "content": system_prompt
                 },
                 {"role": "user", "content": user_requirement}
             ],

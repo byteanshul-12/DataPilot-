@@ -1,0 +1,9 @@
+transformers==4.51.3
+peft==0.15.2
+accelerate==1.6.0
+bitsandbytes==0.45.5
+datasets==3.5.0
+numpy<3
+fastapi
+uvicorn
+pydantic
