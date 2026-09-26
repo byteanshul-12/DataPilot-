@@ -4,19 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:generate": "drizzle-kit generate:pg",
-    "db:push": "drizzle-kit push:pg",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "drizzle-orm": "^0.30.0",
+    "drizzle-orm": "^0.38.3",
     "pg": "^8.11.3",
     "postgres": "^3.4.3"
   },
   "devDependencies": {
     "@types/pg": "^8.11.2",
-    "drizzle-kit": "^0.20.14",
+    "drizzle-kit": "^0.30.5",
     "typescript": "^5.3.3"
   }
 }
