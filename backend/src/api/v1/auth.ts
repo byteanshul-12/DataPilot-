@@ -28,9 +28,11 @@ authRouter.post('/guest', async (req: Request, res: Response) => {
       expiresAt: session.expiresAt,
     });
   } catch (error) {
+    console.error('Guest session creation error:', error);
     return res.status(500).json({
       error: 'InternalServerError',
       message: 'Failed to create guest session',
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -69,6 +71,7 @@ authRouter.post('/migrate-guest', requireAuth, async (req: Request, res: Respons
 
     return res.json(result);
   } catch (error) {
+    console.error('Guest migration error:', error);
     return res.status(500).json({
       error: 'InternalServerError',
       message: 'Failed to migrate guest data',
@@ -87,6 +90,7 @@ authRouter.post('/logout', async (req: Request, res: Response) => {
       message: 'Logged out successfully',
     });
   } catch (error) {
+    console.error('Logout error:', error);
     return res.status(500).json({
       error: 'InternalServerError',
       message: 'Failed to complete logout',
