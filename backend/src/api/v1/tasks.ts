@@ -16,7 +16,7 @@ tasksRouter.post('/', requireUserOrGuest, async (req, res) => {
   }
 
   const identity = req.authIdentity;
-  const userId = identity?.type === 'user' ? identity.dbUserId : undefined;
+  const userId = identity?.type === 'user' ? identity.userId : undefined;
   const guestId = identity?.type === 'guest' ? identity.guestId : undefined;
 
   const [task] = await db
@@ -38,8 +38,8 @@ tasksRouter.get('/', requireUserOrGuest, async (req, res) => {
   const identity = req.authIdentity;
   let tasks: unknown[] = [];
 
-  if (identity?.type === 'user' && identity.dbUserId) {
-    tasks = await db.select().from(collectionTasks).where(eq(collectionTasks.userId, identity.dbUserId));
+  if (identity?.type === 'user' && identity.userId) {
+    tasks = await db.select().from(collectionTasks).where(eq(collectionTasks.userId, identity.userId));
   } else if (identity?.type === 'guest') {
     tasks = await db.select().from(collectionTasks).where(eq(collectionTasks.guestId, identity.guestId));
   }
