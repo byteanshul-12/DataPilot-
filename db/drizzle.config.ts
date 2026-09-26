@@ -1,14 +1,14 @@
 // Drizzle Kit configuration for PostgreSQL migration management.
-import type { Config } from 'drizzle-kit';
+import { defineConfig } from 'drizzle-kit';
 import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '../.env' });
 
-export default {
+export default defineConfig({
   schema: './src/schema.ts',
   out: './migrations',
-  driver: 'pg',
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgrespassword@localhost:5432/datapilot',
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgrespassword@localhost:5432/datapilot',
   },
-} satisfies Config;
+});
