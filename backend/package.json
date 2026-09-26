@@ -19,7 +19,6 @@
     "express": "^4.18.3",
     "ioredis": "^5.3.2",
     "postgres": "^3.4.3",
-    "rapidfuzz": "^3.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
