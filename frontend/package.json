@@ -13,6 +13,7 @@
     "@clerk/clerk-react": "^5.0.0",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-table": "^8.0.0",
+    "better-auth": "^1.7.6",
     "clsx": "^2.1.0",
     "lucide-react": "^0.350.0",
     "react": "^18.2.0",

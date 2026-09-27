@@ -1,5 +1,5 @@
 // PostCSS configuration for Tailwind CSS.
-module.exports = {
+export default {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},

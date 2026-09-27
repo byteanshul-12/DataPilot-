@@ -1,6 +1,6 @@
 // Tailwind CSS configuration for styling setup.
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
