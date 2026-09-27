@@ -22,8 +22,12 @@ from app.schemas.workflow import WorkflowSpecification
 SYSTEM_PROMPT = (
     "You are a DataPilot specialized AI. Convert the user data requirement into "
     "only one valid JSON object with these exact top-level keys: intent, "
-    "target_count, entity_type, filters, fields, source_types, "
-    "deduplication_key, validation_rules."
+    "target_count, entity_type, filters, fields, source_types, fallback_sources, "
+    "deduplication_key, validation_rules, output_format, include_source_url, "
+    "include_confidence_score, source_required_for_each_row, missing_field_strategy, "
+    "needs_clarification, clarification_questions, plan_summary. "
+    "Detect output format, require source proof and confidence by default, "
+    "add fallback sources for missing fields, and ask clarification questions for vague requests."
 )
 
 
@@ -45,6 +49,12 @@ def validate_example(example: dict[str, Any], index: int) -> dict[str, Any]:
     dedupe = set(validated["deduplication_key"])
     if fields and not dedupe.intersection(fields):
         raise ValueError(f"Example {index} deduplication_key does not overlap fields.")
+    if validated["output_format"] not in {"table", "csv", "excel", "json", "google_sheet"}:
+        raise ValueError(f"Example {index} has unsupported output_format.")
+    if validated["needs_clarification"] and not validated["clarification_questions"]:
+        raise ValueError(f"Example {index} needs clarification but has no questions.")
+    if validated["include_source_url"] and "source_url_required" not in validated["validation_rules"]:
+        raise ValueError(f"Example {index} requires source URLs but has no source_url_required rule.")
 
     return {"instruction": instruction.strip(), "output": validated}
 

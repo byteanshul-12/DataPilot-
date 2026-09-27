@@ -36,13 +36,23 @@ def test_generate_plan_from_spec():
         "filters": {"country": "India", "industry": "SaaS"},
         "fields": ["company_name", "founder", "website"],
         "source_types": ["company_website"],
+        "fallback_sources": ["search_engine", "linkedin"],
         "deduplication_key": ["company_name", "website"],
-        "validation_rules": ["company_name_required", "website_valid_url"]
+        "validation_rules": ["company_name_required", "website_valid_url", "source_url_required"],
+        "output_format": "excel",
+        "include_source_url": True,
+        "include_confidence_score": True,
+        "missing_field_strategy": "retry_with_fallback_sources",
+        "plan_summary": "Find Indian SaaS startups and export verified records."
     }
     plan = generate_plan_from_spec(spec)
     assert len(plan["queries"]) >= 1
     assert "company_name" in plan["fields"]
     assert "company_name_required" in plan["validation_rules"]
+    assert plan["output_format"] == "excel"
+    assert plan["fallback_sources"] == ["search_engine", "linkedin"]
+    assert plan["include_source_url"] is True
+    assert plan["include_confidence_score"] is True
 
 
 @pytest.mark.asyncio
@@ -51,9 +61,10 @@ async def test_validate_record_logic():
         "company_name": "DataPilot Inc",
         "website": "https://datapilot.ai",
         "founder": "Jane Doe",
+        "confidence_score": 95,
         "_source": {"url": "https://datapilot.ai", "retrieved_by": "firecrawl"}
     }
-    res = validate_single_record(valid_rec, ["company_name_required", "website_valid_url"])
+    res = validate_single_record(valid_rec, ["company_name_required", "website_valid_url", "source_url_required", "confidence_score_required"])
     assert res.valid is True
     assert len(res.errors) == 0
 
@@ -62,7 +73,7 @@ async def test_validate_record_logic():
         "website": "invalid-url-string",
         "founder": None
     }
-    res_inv = validate_single_record(invalid_rec, ["company_name_required", "website_valid_url"])
+    res_inv = validate_single_record(invalid_rec, ["company_name_required", "website_valid_url", "source_url_required", "confidence_score_required"])
     assert res_inv.valid is False
     assert len(res_inv.errors) >= 1
 

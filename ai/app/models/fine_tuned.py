@@ -9,6 +9,38 @@ from app.models.base import DataPilotModel, ModelConfigurationError, ModelExecut
 
 logger = logging.getLogger(__name__)
 
+WORKFLOW_KEYS = [
+    "intent",
+    "target_count",
+    "entity_type",
+    "filters",
+    "fields",
+    "source_types",
+    "fallback_sources",
+    "deduplication_key",
+    "validation_rules",
+    "output_format",
+    "include_source_url",
+    "include_confidence_score",
+    "source_required_for_each_row",
+    "missing_field_strategy",
+    "needs_clarification",
+    "clarification_questions",
+    "plan_summary",
+]
+
+SYSTEM_PROMPT = (
+    "You are a DataPilot specialized AI. Convert the user data requirement into "
+    "only one valid JSON object matching these exact top-level keys: "
+    f"{', '.join(WORKFLOW_KEYS)}. "
+    "Detect output_format as table, csv, excel, json, or google_sheet. "
+    "Set include_source_url, include_confidence_score, and source_required_for_each_row to true by default. "
+    "Use fallback_sources when fields may be missing. "
+    "Use needs_clarification and clarification_questions only when the request is too vague to execute safely. "
+    "Write plan_summary as one short user-visible sentence. "
+    "Do not wrap the response in markdown. Do not add any extra top-level keys."
+)
+
 
 def _extract_json_from_text(text: str) -> dict[str, Any]:
     """Parse JSON from raw text response, handling markdown blocks if present."""
@@ -51,16 +83,7 @@ class FineTunedHTTPModel(DataPilotModel):
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
-        system_prompt = (
-            "You are a DataPilot specialized AI. Convert the user data requirement into "
-            "only one valid JSON object matching this exact schema: "
-            '{"intent":"string","target_count":number,"entity_type":"company|job|lead|event|product|sponsor|competitor|other",'
-            '"filters":{},"fields":["field_name"],"source_types":["source_type"],'
-            '"deduplication_key":["field_name"],"validation_rules":["rule_name"]}. '
-            "Do not wrap the response in markdown. Do not add any top-level key except "
-            "intent, target_count, entity_type, filters, fields, source_types, "
-            "deduplication_key, and validation_rules."
-        )
+        system_prompt = SYSTEM_PROMPT
         plain_prompt = f"{system_prompt}\n\nUser requirement: {user_requirement}\n\nJSON:"
 
         # Standard vLLM / OpenAI-compatible / custom inference request payload
@@ -169,6 +192,40 @@ class MockRuleBasedModel(DataPilotModel):
 
         if not fields:
             fields = ["company_name", "website", "founder"]
+        if entity_type == "company" and "company_name" not in fields:
+            fields.insert(0, "company_name")
+
+        output_format = "table"
+        if "excel" in req_lower or "xlsx" in req_lower or "spreadsheet" in req_lower:
+            output_format = "excel"
+        elif "csv" in req_lower:
+            output_format = "csv"
+        elif "google sheet" in req_lower or "sheets" in req_lower:
+            output_format = "google_sheet"
+        elif "json" in req_lower:
+            output_format = "json"
+
+        needs_proof = any(term in req_lower for term in ["source", "proof", "verify", "verified", "confidence"])
+        vague_terms = {"find startups", "find companies", "get data", "find leads", "find jobs"}
+        needs_clarification = req_lower.strip() in vague_terms or len(req_lower.split()) <= 3
+        clarification_questions = []
+        if needs_clarification:
+            clarification_questions = [
+                "Which country or region should I search in?",
+                "Which fields do you need?",
+                "How many results do you want?",
+            ]
+
+        validation_rules = [f"{f}_required" for f in fields[:2]]
+        if "website" in fields:
+            validation_rules.append("website_valid_url")
+        if "email" in fields:
+            validation_rules.append("email_valid")
+        if "linkedin_url" in fields:
+            validation_rules.append("linkedin_url_valid_url")
+        validation_rules.extend(["source_url_required", "duplicate_check_required"])
+        if "confidence_score_required" not in validation_rules:
+            validation_rules.append("confidence_score_required")
 
         return {
             "intent": f"extract_{entity_type}s",
@@ -177,8 +234,20 @@ class MockRuleBasedModel(DataPilotModel):
             "filters": filters,
             "fields": fields,
             "source_types": ["company_website", "linkedin", "startup_database", "news"],
+            "fallback_sources": ["search_engine", "company_website", "linkedin", "news"],
             "deduplication_key": ["company_name", "website"] if "website" in fields else ["company_name"],
-            "validation_rules": [f"{f}_required" for f in fields[:2]] + ["website_valid_url" if "website" in fields else ""]
+            "validation_rules": validation_rules,
+            "output_format": output_format,
+            "include_source_url": True if needs_proof or True else False,
+            "include_confidence_score": True,
+            "source_required_for_each_row": True,
+            "missing_field_strategy": "ask_user_for_clarification" if needs_clarification else "retry_with_fallback_sources",
+            "needs_clarification": needs_clarification,
+            "clarification_questions": clarification_questions,
+            "plan_summary": (
+                f"Find {target_count} {entity_type} records, collect requested fields, "
+                f"verify source links, remove duplicates, and return {output_format} output."
+            ),
         }
 
 

@@ -57,6 +57,11 @@ class DataParserTool:
 
         return extracted_records
 
+    def _attach_provenance(self, record: dict[str, Any], source_meta: dict, confidence_score: int = 75) -> dict[str, Any]:
+        record["_source"] = source_meta
+        record["confidence_score"] = record.get("confidence_score", confidence_score)
+        return record
+
     def _parse_html_tables(
         self, soup: BeautifulSoup, fields: list[str], source_meta: dict, doc_url: str
     ) -> list[dict[str, Any]]:
@@ -83,8 +88,8 @@ class DataParserTool:
                     if f not in record:
                         record[f] = None
                 
-                record["_source"] = source_meta
-                if any(v is not None for k, v in record.items() if k != "_source"):
+                record = self._attach_provenance(record, source_meta, confidence_score=85)
+                if any(v is not None for k, v in record.items() if k not in {"_source", "confidence_score"}):
                     records.append(record)
         return records
 
@@ -99,7 +104,7 @@ class DataParserTool:
             if len(text) < 15:
                 continue
             record = self._extract_fields_from_text_block(text, card, fields, source_meta, doc_url)
-            if any(v is not None for k, v in record.items() if k != "_source"):
+            if any(v is not None for k, v in record.items() if k not in {"_source", "confidence_score"}):
                 records.append(record)
         return records
 
@@ -161,8 +166,7 @@ class DataParserTool:
                 else:
                     record[f] = None
 
-        record["_source"] = source_meta
-        return record
+        return self._attach_provenance(record, source_meta, confidence_score=75)
 
 
     def _parse_single_doc_record(self, doc: dict, fields: list[str], source_meta: dict) -> Optional[dict[str, Any]]:
@@ -181,8 +185,7 @@ class DataParserTool:
             else:
                 record[f] = None
         
-        record["_source"] = source_meta
-        return record
+        return self._attach_provenance(record, source_meta, confidence_score=65)
 
     def _map_header_to_field(self, header: str, fields: list[str]) -> Optional[str]:
         header = header.lower().replace(" ", "_")

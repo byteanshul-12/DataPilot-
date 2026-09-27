@@ -10,7 +10,7 @@ from app.schemas.workflow import WorkflowSpecification
 async def test_mock_model_generation():
     model = MockRuleBasedModel()
     spec = await model.generate_workflow_spec(
-        "Find 100 Indian SaaS startups founded after 2022 with company name, founder, website and funding stage."
+        "Find 100 Indian SaaS startups founded after 2022 with company name, founder, website and funding stage. Give it in Excel with source proof and confidence score."
     )
     
     assert spec["intent"] == "extract_companys"
@@ -19,10 +19,26 @@ async def test_mock_model_generation():
     assert spec["filters"].get("country") == "India"
     assert spec["filters"].get("industry") == "SaaS"
     assert spec["filters"].get("founded_after") == 2022
+    assert spec["output_format"] == "excel"
+    assert spec["include_source_url"] is True
+    assert spec["include_confidence_score"] is True
+    assert "source_url_required" in spec["validation_rules"]
+    assert spec["fallback_sources"]
+    assert spec["plan_summary"]
 
     # Validate against Pydantic schema
     validated = WorkflowSpecification(**spec)
     assert validated.target_count == 100
+
+
+@pytest.mark.asyncio
+async def test_mock_model_clarifies_vague_prompt():
+    model = MockRuleBasedModel()
+    spec = await model.generate_workflow_spec("Find startups")
+
+    assert spec["needs_clarification"] is True
+    assert spec["missing_field_strategy"] == "ask_user_for_clarification"
+    assert len(spec["clarification_questions"]) >= 1
 
 
 def test_json_extractor_from_markdown():

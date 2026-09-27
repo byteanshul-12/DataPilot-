@@ -133,7 +133,7 @@ def main():
             valid, correct = False, []
         checks.append({"prompt": item["messages"][1]["content"], "output": raw,
                        "valid_json_keys": valid, "correct_fields": correct, "exact_match": len(correct) == len(expected)})
-        print(f"Test {len(checks)}/{len(test_rows)}: valid={valid}, correct_fields={len(correct)}/8", flush=True)
+        print(f"Test {len(checks)}/{len(test_rows)}: valid={valid}, correct_fields={len(correct)}/{len(expected)}", flush=True)
     summary = {"total": len(checks), "valid_json_keys": sum(c["valid_json_keys"] for c in checks),
                "exact_matches": sum(c["exact_match"] for c in checks), "examples": checks}
     (out / "test_report.json").write_text(json.dumps(summary, indent=2))

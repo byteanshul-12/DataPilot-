@@ -13,8 +13,14 @@ def generate_plan_from_spec(spec: dict[str, Any]) -> dict[str, Any]:
     filters = spec.get("filters", {})
     fields = spec.get("fields") or ["company_name", "website", "founder"]
     source_types = spec.get("source_types") or ["company_website", "startup_database"]
+    fallback_sources = spec.get("fallback_sources") or ["search_engine", "company_website", "news"]
     dedup_key = spec.get("deduplication_key") or (["company_name", "website"] if "website" in fields else ["company_name"])
     validation_rules = spec.get("validation_rules") or [f"{f}_required" for f in fields[:2]]
+    output_format = spec.get("output_format", "table")
+    include_source_url = spec.get("include_source_url", True)
+    include_confidence_score = spec.get("include_confidence_score", True)
+    missing_field_strategy = spec.get("missing_field_strategy", "retry_with_fallback_sources")
+    plan_summary = spec.get("plan_summary", "")
 
     # Generate targeted search queries
     filter_terms = " ".join([f"{k} {v}" for k, v in filters.items()])
@@ -33,7 +39,13 @@ def generate_plan_from_spec(spec: dict[str, Any]) -> dict[str, Any]:
         fields=fields,
         source_types=source_types,
         deduplication_key=dedup_key,
-        validation_rules=validation_rules
+        validation_rules=validation_rules,
+        output_format=output_format,
+        fallback_sources=fallback_sources,
+        include_source_url=include_source_url,
+        include_confidence_score=include_confidence_score,
+        missing_field_strategy=missing_field_strategy,
+        plan_summary=plan_summary,
     )
     return plan.model_dump()
 
