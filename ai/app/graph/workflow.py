@@ -5,6 +5,7 @@ from typing import Literal
 from langgraph.graph import END, StateGraph
 
 from app.graph.nodes.deduplicate import deduplicate_node
+from app.graph.nodes.email_outreach import email_outreach_node
 from app.graph.nodes.extract import extract_node
 from app.graph.nodes.plan import plan_node
 from app.graph.nodes.search import search_node
@@ -17,14 +18,18 @@ logger = logging.getLogger(__name__)
 MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", "3"))
 
 
-def check_target_condition(state: WorkflowState) -> Literal["search", "__end__"]:
+def check_target_condition(state: WorkflowState) -> Literal["search", "email_outreach"]:
     """Conditional edge router: Check if target count is reached or max iterations exceeded."""
     dedup_count = len(state.get("deduplicated_records", []))
     target_count = state.get("target_count", 10)
     current_iteration = state.get("iteration", 1)
 
-    logger.info(f"[{state.get('task_id')}] Target Check: {dedup_count}/{target_count} records collected (Iteration {current_iteration}/{MAX_ITERATIONS})")
+    logger.info(
+        f"[{state.get('task_id')}] Target Check: {dedup_count}/{target_count} records collected "
+        f"(Iteration {current_iteration}/{MAX_ITERATIONS})"
+    )
 
+<<<<<<< HEAD
     sources = state.get("discovered_sources", [])
     scraped = {d.get("url") for d in state.get("raw_documents", [])}
     scraped.update(state.get("attempted_urls", []))
@@ -33,9 +38,14 @@ def check_target_condition(state: WorkflowState) -> Literal["search", "__end__"]
         logger.info(f"[{state.get('task_id')}] Workflow completing: target achieved or max iterations reached.")
         return END
     
+=======
+    if dedup_count >= target_count or current_iteration > MAX_ITERATIONS:
+        logger.info(f"[{state.get('task_id')}] Target achieved or max iterations reached. Transitioning to email outreach.")
+        return "email_outreach"
+
+>>>>>>> 0966c3599910bff33383524632d015ed41017729
     logger.info(f"[{state.get('task_id')}] Target not yet reached. Looping back to SEARCH node.")
     return "search"
-
 
 
 def build_collection_graph():
@@ -49,6 +59,7 @@ def build_collection_graph():
     workflow.add_node("extract", extract_node)
     workflow.add_node("validate", validate_node)
     workflow.add_node("deduplicate", deduplicate_node)
+    workflow.add_node("email_outreach", email_outreach_node)
 
     # Set entry point
     workflow.set_entry_point("understand")
@@ -60,14 +71,17 @@ def build_collection_graph():
     workflow.add_edge("extract", "validate")
     workflow.add_edge("validate", "deduplicate")
 
-    # Conditional looping edge
+    # Conditional looping edge: loop back to search or proceed to email outreach
     workflow.add_conditional_edges(
         "deduplicate",
         check_target_condition,
         {
             "search": "search",
-            END: END
-        }
+            "email_outreach": "email_outreach",
+        },
     )
+
+    # From email outreach to termination
+    workflow.add_edge("email_outreach", END)
 
     return workflow.compile()

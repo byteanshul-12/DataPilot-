@@ -38,9 +38,11 @@ class TaskManager:
                 "sources_discovered": 0,
                 "records_extracted": 0,
                 "records_validated": 0,
-                "records_deduplicated": 0
+                "records_deduplicated": 0,
+                "emails_outreached": 0
             },
             "result_records": [],
+            "outreach_emails": [],
             "errors": [],
             "specification": {},
             "plan": {}
@@ -70,6 +72,7 @@ class TaskManager:
             "extracted_records": [],
             "validated_records": [],
             "deduplicated_records": [],
+            "outreach_emails": [],
             "errors": [],
             "target_count": 10,
             "iteration": 1,
@@ -96,6 +99,7 @@ class TaskManager:
             task_info["reply"] = reply_for(final_state.get("specification", {}))
             task_info["specification"] = final_state.get("specification", {})
             task_info["result_records"] = final_state.get("deduplicated_records", [])
+            task_info["outreach_emails"] = final_state.get("outreach_emails", [])
             task_info["errors"] = final_state.get("errors", [])
             requested = final_state.get("target_count", 10)
             if route == "ready" and len(task_info["result_records"]) < requested:
@@ -105,7 +109,8 @@ class TaskManager:
                 "sources_discovered": len(final_state.get("discovered_sources", [])),
                 "records_extracted": len(final_state.get("extracted_records", [])),
                 "records_validated": len(final_state.get("validated_records", [])),
-                "records_deduplicated": len(final_state.get("deduplicated_records", []))
+                "records_deduplicated": len(final_state.get("deduplicated_records", [])),
+                "emails_outreached": len(final_state.get("outreach_emails", []))
             }
             logger.info(f"Task task_id={task_id} completed successfully with {len(task_info['result_records'])} records.")
         except TimeoutError:

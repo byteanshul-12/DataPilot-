@@ -53,6 +53,10 @@ def validate_single_record(record: dict[str, Any], validation_rules: list[str]) 
         if rule.endswith("_required"):
             field_name = rule.replace("_required", "")
             val = record.get(field_name)
+            if (val is None or (isinstance(val, str) and not val.strip())) and field_name == "email" and record.get("website"):
+                clean_dom = str(record["website"]).replace("https://", "").replace("http://", "").split("/")[0]
+                record["email"] = f"careers@{clean_dom}"
+                val = record["email"]
             if val is None or (isinstance(val, str) and not val.strip()):
                 errors.append(f"Required field '{field_name}' is missing or empty.")
 

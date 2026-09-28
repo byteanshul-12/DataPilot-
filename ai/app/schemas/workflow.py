@@ -21,6 +21,9 @@ class WorkflowSpecification(BaseModel):
     needs_clarification: bool = Field(default=False, description="Whether the user request is too vague to execute safely")
     clarification_questions: list[str] = Field(default_factory=list, description="Questions to ask before scraping when the request is vague")
     plan_summary: str = Field(default="", description="Short user-visible explanation of the AI collection plan")
+    enable_email_outreach: bool = Field(default=False, description="Whether automated cold email outreach should be executed for collected records")
+    sender_email: Optional[str] = Field(default=None, description="Sender email address for outreach if specified by user")
+    outreach_role_or_topic: Optional[str] = Field(default=None, description="Target role or topic to highlight in the cold email")
 
 
 class ExecutionPlan(BaseModel):
@@ -36,6 +39,9 @@ class ExecutionPlan(BaseModel):
     include_confidence_score: bool = True
     missing_field_strategy: str = "retry_with_fallback_sources"
     plan_summary: str = ""
+    enable_email_outreach: bool = False
+    sender_email: Optional[str] = None
+    outreach_role_or_topic: Optional[str] = None
 
 
 class SourceMetadata(BaseModel):

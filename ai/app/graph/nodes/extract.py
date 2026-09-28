@@ -123,6 +123,7 @@ async def extract_node(state: WorkflowState) -> dict[str, Any]:
         attempted_urls.add(url)
         scrape_tasks.append(_scrape_source(dict(src, _spec=spec), index, firecrawl, browser, semaphore))
 
+<<<<<<< HEAD
     scraped_groups = await asyncio.gather(*scrape_tasks, return_exceptions=True)
     for src, group in zip(candidate_sources, scraped_groups):
         if not group or isinstance(group, Exception):
@@ -147,6 +148,47 @@ async def extract_node(state: WorkflowState) -> dict[str, Any]:
                 except Exception as exc:
                     errors.append(f"Semantic extraction failed for {url}: {type(exc).__name__}")
             extracted_records.extend(records)
+=======
+        doc = None
+        # First choice: Firecrawl
+        doc = await firecrawl.scrape_url(url)
+        
+        # Fallback choice: Playwright browser
+        if not doc:
+            logger.info(f"Firecrawl unavailable or failed for {url}. Trying Playwright browser fallback.")
+            doc = await browser.scrape_url(url)
+
+        # Fallback to Tavily title/content snippet if scrapers failed
+        if not doc and src.get("content"):
+            doc = {
+                "url": url,
+                "title": src.get("title", ""),
+                "content": src.get("content", ""),
+                "raw_html": "",
+                "_source": {
+                    "url": url,
+                    "title": src.get("title", ""),
+                    "retrieved_by": "tavily"
+                }
+            }
+
+        if doc:
+            records = parser.parse_document(doc, requested_fields=fields, entity_type=entity_type)
+            if not records and src.get("content"):
+                snippet_doc = {
+                    "url": url,
+                    "title": src.get("title", ""),
+                    "content": src.get("content", ""),
+                    "raw_html": "",
+                    "_source": {"url": url, "title": src.get("title", ""), "retrieved_by": "tavily"}
+                }
+                records = parser.parse_document(snippet_doc, requested_fields=fields, entity_type=entity_type)
+
+            if records:
+                scraped_urls.add(url)
+                raw_docs.append(doc)
+                extracted_records.extend(records)
+>>>>>>> 0966c3599910bff33383524632d015ed41017729
 
     profile_urls = list(dict.fromkeys(r.get("_profile_url") for r in extracted_records if r.get("_profile_url") and r["_profile_url"] not in scraped_urls))
     if entity_type == "company":

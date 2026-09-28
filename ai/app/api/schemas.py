@@ -44,6 +44,7 @@ class WorkflowProgressMetrics(BaseModel):
     records_extracted: int = 0
     records_validated: int = 0
     records_deduplicated: int = 0
+    emails_outreached: int = 0
 
 
 class WorkflowStatusResponse(BaseModel):
@@ -61,6 +62,7 @@ class WorkflowResultResponse(BaseModel):
     task_id: str
     status: str
     records: list[dict[str, Any]] = Field(default_factory=list)
+    outreach_emails: list[dict[str, Any]] = Field(default_factory=list)
     total: int = 0
     requested_count: int = 0
     target_met: bool = False

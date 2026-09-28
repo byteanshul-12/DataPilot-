@@ -18,6 +18,8 @@ class WorkflowState(TypedDict):
     validated_records: list[dict[str, Any]]
     deduplicated_records: list[dict[str, Any]]
 
+    outreach_emails: list[dict[str, Any]]
+
     errors: list[str]
 
     target_count: int
