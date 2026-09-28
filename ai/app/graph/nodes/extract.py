@@ -54,10 +54,21 @@ async def extract_node(state: WorkflowState) -> dict[str, Any]:
             }
 
         if doc:
-            scraped_urls.add(url)
-            raw_docs.append(doc)
             records = parser.parse_document(doc, requested_fields=fields, entity_type=entity_type)
-            extracted_records.extend(records)
+            if not records and src.get("content"):
+                snippet_doc = {
+                    "url": url,
+                    "title": src.get("title", ""),
+                    "content": src.get("content", ""),
+                    "raw_html": "",
+                    "_source": {"url": url, "title": src.get("title", ""), "retrieved_by": "tavily"}
+                }
+                records = parser.parse_document(snippet_doc, requested_fields=fields, entity_type=entity_type)
+
+            if records:
+                scraped_urls.add(url)
+                raw_docs.append(doc)
+                extracted_records.extend(records)
 
     logger.info(f"EXTRACT node extracted {len(extracted_records)} total candidate records across {len(raw_docs)} documents.")
 

@@ -99,10 +99,12 @@ async def get_workflow_results(task_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task ID {task_id} not found.")
 
     records = task_info.get("result_records", [])
+    outreach = task_info.get("outreach_emails", [])
     return WorkflowResultResponse(
         task_id=task_id,
         status=task_info.get("status", "unknown"),
         records=records,
+        outreach_emails=outreach,
         total=len(records)
     )
 

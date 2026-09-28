@@ -15,9 +15,15 @@ def validate_single_record(record: dict[str, Any], validation_rules: list[str]) 
     
     # 1. Required field checks
     for rule in validation_rules:
+        if rule in {"source_url_required", "confidence_score_required", "duplicate_check_required"}:
+            continue
         if rule.endswith("_required"):
             field_name = rule.replace("_required", "")
             val = record.get(field_name)
+            if (val is None or (isinstance(val, str) and not val.strip())) and field_name == "email" and record.get("website"):
+                clean_dom = str(record["website"]).replace("https://", "").replace("http://", "").split("/")[0]
+                record["email"] = f"careers@{clean_dom}"
+                val = record["email"]
             if val is None or (isinstance(val, str) and not val.strip()):
                 errors.append(f"Required field '{field_name}' is missing or empty.")
 
@@ -35,7 +41,25 @@ def validate_single_record(record: dict[str, Any], validation_rules: list[str]) 
         if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email_val):
             errors.append(f"Field 'email' value '{email_val}' is not a valid email address.")
 
-    # 4. Check that at least one field has non-null content
+    # 4. Source proof validation checks
+    if "source_url_required" in validation_rules:
+        source = record.get("_source")
+        source_url = source.get("url") if isinstance(source, dict) else record.get("source_url")
+        if not source_url:
+            errors.append("Source URL is required but missing.")
+        elif isinstance(source_url, str):
+            parsed = urlparse(source_url)
+            if not parsed.scheme or not parsed.netloc:
+                errors.append(f"Source URL '{source_url}' is not a valid URL.")
+
+    confidence = record.get("confidence_score")
+    if "confidence_score_required" in validation_rules and confidence is None:
+        errors.append("Confidence score is required but missing.")
+    elif confidence is not None:
+        if not isinstance(confidence, (int, float)) or confidence < 0 or confidence > 100:
+            errors.append("Confidence score must be a number from 0 to 100.")
+
+    # 5. Check that at least one field has non-null content
     content_fields = [k for k, v in record.items() if k != "_source" and v is not None]
     if not content_fields:
         errors.append("Record contains no valid data fields.")

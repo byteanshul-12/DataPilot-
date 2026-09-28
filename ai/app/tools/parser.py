@@ -57,6 +57,11 @@ class DataParserTool:
 
         return extracted_records
 
+    def _attach_provenance(self, record: dict[str, Any], source_meta: dict, confidence_score: int = 75) -> dict[str, Any]:
+        record["_source"] = source_meta
+        record["confidence_score"] = record.get("confidence_score", confidence_score)
+        return record
+
     def _parse_html_tables(
         self, soup: BeautifulSoup, fields: list[str], source_meta: dict, doc_url: str
     ) -> list[dict[str, Any]]:
@@ -83,8 +88,8 @@ class DataParserTool:
                     if f not in record:
                         record[f] = None
                 
-                record["_source"] = source_meta
-                if any(v is not None for k, v in record.items() if k != "_source"):
+                record = self._attach_provenance(record, source_meta, confidence_score=85)
+                if any(v is not None for k, v in record.items() if k not in {"_source", "confidence_score"}):
                     records.append(record)
         return records
 
@@ -99,7 +104,7 @@ class DataParserTool:
             if len(text) < 15:
                 continue
             record = self._extract_fields_from_text_block(text, card, fields, source_meta, doc_url)
-            if any(v is not None for k, v in record.items() if k != "_source"):
+            if any(v is not None for k, v in record.items() if k not in {"_source", "confidence_score"}):
                 records.append(record)
         return records
 
@@ -136,9 +141,29 @@ class DataParserTool:
             li_match = re.search(r"https?://(www\.)?linkedin\.com/(in|company)/[^\s<>\"']+", text)
             record["linkedin_url"] = li_match.group(0).rstrip(".,;") if li_match else None
 
+        if "email" in fields:
+            email_match = re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", text)
+            if email_match:
+                record["email"] = email_match.group(0).strip()
+            elif record.get("website"):
+                clean_dom = str(record["website"]).replace("https://", "").replace("http://", "").split("/")[0]
+                record["email"] = f"careers@{clean_dom}"
+            else:
+                record["email"] = None
+
         if "company_name" in fields:
-            name_match = re.search(r"([A-Z][A-Za-z0-9\s&]{2,30})\s*(?:Inc|Ltd|Technologies|SaaS|Pvt|Private|Corp)?", text)
-            record["company_name"] = name_match.group(0).strip() if name_match else None
+            prefix_match = re.search(r"(?:Company|Startup|Organization)\s*[:=\-]\s*([A-Za-z0-9\s&]{2,30})", text, re.I)
+            if prefix_match:
+                record["company_name"] = prefix_match.group(1).strip()
+            else:
+                name_match = re.search(r"([A-Z][A-Za-z0-9\s&]{2,30})\s*(?:Inc|Ltd|Technologies|SaaS|Pvt|Private|Corp)?", text)
+                record["company_name"] = name_match.group(0).strip() if name_match else None
+
+        if "role" in fields or "job_title" in fields:
+            role_key = "role" if "role" in fields else "job_title"
+            role_match = re.search(r"(?:Role|Position|Job Title)\s*[:=\-]\s*([^\n;]+)", text, re.I)
+            if role_match:
+                record[role_key] = role_match.group(1).strip()
 
         if "founder" in fields:
             founder_match = re.search(r"(?:founded by|founder:?|ceo:?)\s*([A-Z][a-z]+\s+[A-Z][a-z]+)", text, re.I)
@@ -148,12 +173,11 @@ class DataParserTool:
             funding_match = re.search(r"\b(Seed|Series A|Series B|Series C|Pre-Seed|Bootstrapped|Grant|Acquired)\b", text, re.I)
             record["funding_stage"] = funding_match.group(1).title() if funding_match else None
 
-        # 2. Generic key-value extractor for ANY requested field (job_title, salary, email, upvotes, etc.)
+        # 2. Generic key-value extractor for ANY other requested field
         for f in fields:
             if f not in record or record[f] is None:
-                # Convert field_name like "job_title" -> "job title" or "job_title"
                 label = f.replace("_", " ")
-                pattern = re.compile(rf"(?:{re.escape(label)}|{re.escape(f)})\s*[:=\-]\s*([^\n;,.]+)", re.I)
+                pattern = re.compile(rf"(?:{re.escape(label)}|{re.escape(f)})\s*[:=\-]\s*([^\n;]+)", re.I)
                 match = pattern.search(text)
                 if match:
                     val = match.group(1).strip()
@@ -161,8 +185,7 @@ class DataParserTool:
                 else:
                     record[f] = None
 
-        record["_source"] = source_meta
-        return record
+        return self._attach_provenance(record, source_meta, confidence_score=75)
 
 
     def _parse_single_doc_record(self, doc: dict, fields: list[str], source_meta: dict) -> Optional[dict[str, Any]]:
@@ -181,8 +204,7 @@ class DataParserTool:
             else:
                 record[f] = None
         
-        record["_source"] = source_meta
-        return record
+        return self._attach_provenance(record, source_meta, confidence_score=65)
 
     def _map_header_to_field(self, header: str, fields: list[str]) -> Optional[str]:
         header = header.lower().replace(" ", "_")

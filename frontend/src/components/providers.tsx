@@ -40,7 +40,7 @@ export function Providers({ children }: { children: ReactNode }) {
       navigate={navigate}
       Link={AuthLink}
       redirectTo="/dashboard"
-      socialProviders={["google", "github", "apple"]}
+      socialProviders={["google", "github"]}
     >
       {children}
     </AuthProvider>
