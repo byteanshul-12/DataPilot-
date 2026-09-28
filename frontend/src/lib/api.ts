@@ -70,7 +70,7 @@ export const api = {
     return data;
   }, 
 
-   getExportUrl: (workflowId: string, format: "csv" | "json"): string =>
+   getExportUrl: (workflowId: string, format: "xlsx" | "csv" | "json"): string =>
     `${API_BASE}/datasets/${workflowId}/export?format=${format}`,
    
   deduplicateDataset: async (

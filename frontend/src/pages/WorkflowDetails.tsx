@@ -19,6 +19,9 @@ import {
   Layers,
   Database,
   Globe,
+  FileSpreadsheet,
+  Code2,
+  Table,
 } from "lucide-react";
 
 export default function WorkflowDetails() {
@@ -32,6 +35,7 @@ export default function WorkflowDetails() {
   // Dataset
   const [records, setRecords] = useState<DatasetRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "json">("table");
 
   // Sources
   const [sources, setSources] = useState<SourceItem[]>([]);
@@ -355,6 +359,20 @@ export default function WorkflowDetails() {
                   </Button>
 
                   <a
+                    href={api.getExportUrl(workflow.id, "xlsx")}
+                    download
+                  >
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 border-emerald-800/40 bg-emerald-950/20 text-xs text-emerald-400 hover:bg-emerald-900/30 hover:text-emerald-300"
+                    >
+                      <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                      Excel (.xlsx)
+                    </Button>
+                  </a>
+
+                  <a
                     href={api.getExportUrl(workflow.id, "csv")}
                     download
                   >
@@ -391,11 +409,11 @@ export default function WorkflowDetails() {
 
                 <div className="border-b border-zinc-800 px-5 py-4">
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
                       <p className="text-sm font-medium text-zinc-200">
-                        Dataset
+                        Collected Dataset
                       </p>
 
                       <p className="mt-1 text-xs text-zinc-600">
@@ -403,36 +421,165 @@ export default function WorkflowDetails() {
                       </p>
                     </div>
 
-                    <Database className="h-4 w-4 text-zinc-700" />
+                    <div className="flex items-center gap-1 rounded-md border border-zinc-800 bg-black p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("table")}
+                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                          viewMode === "table"
+                            ? "bg-zinc-800 text-white"
+                            : "text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        <Table className="h-3.5 w-3.5" />
+                        Spreadsheet View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("json")}
+                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                          viewMode === "json"
+                            ? "bg-zinc-800 text-white"
+                            : "text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        <Code2 className="h-3.5 w-3.5" />
+                        JSON View
+                      </button>
+                    </div>
 
                   </div>
 
                 </div>
 
-                <div className="p-5">
+                <div className="p-0">
 
                   {records.length > 0 ? (
+                    viewMode === "table" ? (
+                      <div className="overflow-x-auto">
+                        {(() => {
+                          const columns = Array.from(
+                            new Set(
+                              records.flatMap((r) =>
+                                Object.keys(r.data || {}).filter(
+                                  (k) => !k.startsWith("_")
+                                )
+                              )
+                            )
+                          );
 
-                    <pre className="max-h-[600px] overflow-auto rounded-md border border-zinc-800 bg-black p-4 font-mono text-[11px] leading-5 text-zinc-400">
-                      {JSON.stringify(records, null, 2)}
-                    </pre>
+                          return (
+                            <table className="w-full border-collapse text-left text-xs">
+                              <thead>
+                                <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-400">
+                                  <th className="px-4 py-3 font-semibold uppercase tracking-wider text-zinc-500 w-12 text-center">
+                                    #
+                                  </th>
+                                  {columns.map((col) => (
+                                    <th
+                                      key={col}
+                                      className="px-4 py-3 font-semibold uppercase tracking-wider text-zinc-300"
+                                    >
+                                      {col.replace(/_/g, " ")}
+                                    </th>
+                                  ))}
+                                  <th className="px-4 py-3 font-semibold uppercase tracking-wider text-zinc-400">
+                                    Source Link
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-zinc-850">
+                                {records.map((record, idx) => (
+                                  <tr
+                                    key={record.id || idx}
+                                    className="transition-colors hover:bg-zinc-900/40"
+                                  >
+                                    <td className="px-4 py-3 font-mono text-zinc-600 text-center">
+                                      {idx + 1}
+                                    </td>
+                                    {columns.map((col) => {
+                                      const val = record.data?.[col];
+                                      const isUrl =
+                                        typeof val === "string" &&
+                                        (val.startsWith("http://") ||
+                                          val.startsWith("https://"));
 
+                                      if (col === "confidence_score") {
+                                        return (
+                                          <td key={col} className="px-4 py-3">
+                                            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                                              {val}%
+                                            </span>
+                                          </td>
+                                        );
+                                      }
+
+                                      if (isUrl) {
+                                        return (
+                                          <td key={col} className="px-4 py-3">
+                                            <a
+                                              href={val as string}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="inline-flex items-center gap-1 text-blue-400 hover:underline"
+                                            >
+                                              {val as string}
+                                              <ExternalLink className="h-3 w-3" />
+                                            </a>
+                                          </td>
+                                        );
+                                      }
+
+                                      return (
+                                        <td
+                                          key={col}
+                                          className="px-4 py-3 text-zinc-300"
+                                        >
+                                          {val !== null && val !== undefined
+                                            ? String(val)
+                                            : "—"}
+                                        </td>
+                                      );
+                                    })}
+                                    <td className="px-4 py-3">
+                                      {record.source ? (
+                                        <a
+                                          href={record.source}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 text-zinc-400 hover:text-white hover:underline"
+                                        >
+                                          {record.source.replace(/^https?:\/\//, "").slice(0, 30)}...
+                                          <ExternalLink className="h-3 w-3" />
+                                        </a>
+                                      ) : (
+                                        "—"
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="p-5">
+                        <pre className="max-h-[600px] overflow-auto rounded-md border border-zinc-800 bg-black p-4 font-mono text-[11px] leading-5 text-zinc-400">
+                          {JSON.stringify(records, null, 2)}
+                        </pre>
+                      </div>
+                    )
                   ) : (
-
                     <div className="py-16 text-center">
-
                       <Database className="mx-auto mb-3 h-5 w-5 text-zinc-700" />
-
                       <p className="text-sm text-zinc-500">
                         No dataset records
                       </p>
-
                       <p className="mt-1 text-xs text-zinc-700">
                         Records collected by this workflow will appear here.
                       </p>
-
                     </div>
-
                   )}
 
                 </div>

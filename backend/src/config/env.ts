@@ -1,8 +1,10 @@
 // Environment variable validation using Zod.
 import dotenv from 'dotenv';
+import path from 'path';
 import { z } from 'zod';
 
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 const envSchema = z.object({
   PORT: z.string().default('8000'),
@@ -13,6 +15,11 @@ const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   GUEST_COOKIE_NAME: z.string().default('datapilot_guest_id'),
   GUEST_SESSION_TTL_DAYS: z.coerce.number().default(7),
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
+  GITHUB_CLIENT_ID: z.string().optional().default(''),
+  GITHUB_CLIENT_SECRET: z.string().optional().default(''),
+  AI_SERVICE_URL: z.string().default('http://localhost:8001'),
 });
 
 export const env = envSchema.parse(process.env);
