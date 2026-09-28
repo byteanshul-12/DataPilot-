@@ -113,26 +113,20 @@ async def get_workflow_results(task_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task ID {task_id} not found.")
 
     records = task_info.get("result_records", [])
-<<<<<<< HEAD
     records = [{k: v for k, v in record.items() if k not in {"_context", "_entity_type", "_relevance_verified", "_requested_fields"}} for record in records]
-=======
     outreach = task_info.get("outreach_emails", [])
->>>>>>> 0966c3599910bff33383524632d015ed41017729
+    target_count = task_info.get("specification", {}).get("target_count", 0)
     return WorkflowResultResponse(
         task_id=task_id,
         status=task_info.get("status", "unknown"),
         records=records,
-<<<<<<< HEAD
+        outreach_emails=outreach,
         reply=task_info.get("reply", ""),
         clarification_questions=task_info.get("specification", {}).get("clarification_questions", []),
         total=len(records),
-        requested_count=task_info.get("specification", {}).get("target_count", 0),
-        target_met=bool(task_info.get("specification", {}).get("target_count")) and len(records) >= task_info.get("specification", {}).get("target_count", 0),
+        requested_count=target_count,
+        target_met=bool(target_count) and len(records) >= target_count,
         errors=task_info.get("errors", []),
-=======
-        outreach_emails=outreach,
-        total=len(records)
->>>>>>> 0966c3599910bff33383524632d015ed41017729
     )
 
 

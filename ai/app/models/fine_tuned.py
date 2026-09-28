@@ -210,15 +210,13 @@ class MockRuleBasedModel(DataPilotModel):
         # Always ensure core identity fields are present
         if "company_name" not in fields:
             fields.insert(0, "company_name")
-<<<<<<< HEAD
-        if entity_type == "job":
+        if entity_type in ("job", "internship"):
             fields = list(dict.fromkeys(["job_title", "company_name", "location", "application_link"] + fields))
-=======
-        if "website" not in fields:
-            fields.append("website")
-        if entity_type in ("job", "internship") and "role" not in fields:
-            fields.append("role")
->>>>>>> 0966c3599910bff33383524632d015ed41017729
+            if "role" not in fields:
+                fields.append("role")
+        else:
+            if "website" not in fields:
+                fields.append("website")
 
         output_format = "table"
         if "excel" in req_lower or "xlsx" in req_lower or "spreadsheet" in req_lower:

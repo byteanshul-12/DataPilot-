@@ -284,16 +284,9 @@ class DataParserTool:
                 record["email"] = None
 
         if "company_name" in fields:
-<<<<<<< HEAD
-            labeled_match = re.search(r"(?:company|startup|name)\s*[:=]\s*([^\n;.:]{2,60})", text, re.I)
+            labeled_match = re.search(r"(?:company|startup|name|organization)\s*[:=\-]\s*([^\n;.:]{2,60})", text, re.I)
             if labeled_match:
                 record["company_name"] = labeled_match.group(1).strip()
-            else:
-                record["company_name"] = None
-=======
-            prefix_match = re.search(r"(?:Company|Startup|Organization)\s*[:=\-]\s*([A-Za-z0-9\s&]{2,30})", text, re.I)
-            if prefix_match:
-                record["company_name"] = prefix_match.group(1).strip()
             else:
                 name_match = re.search(r"([A-Z][A-Za-z0-9\s&]{2,30})\s*(?:Inc|Ltd|Technologies|SaaS|Pvt|Private|Corp)?", text)
                 record["company_name"] = name_match.group(0).strip() if name_match else None
@@ -303,7 +296,6 @@ class DataParserTool:
             role_match = re.search(r"(?:Role|Position|Job Title)\s*[:=\-]\s*([^\n;]+)", text, re.I)
             if role_match:
                 record[role_key] = role_match.group(1).strip()
->>>>>>> 0966c3599910bff33383524632d015ed41017729
 
         if "founder" in fields:
             founder_match = re.search(r"(?:founded by|founder:?)\s*([A-Z][a-z]+\s+[A-Z][a-z]+)", text, re.I)
