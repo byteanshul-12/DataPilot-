@@ -39,7 +39,7 @@ export default function Dashboard() {
 
           <button
             onClick={handleSignOut}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground cursor-pointer"
           >
             Sign out
           </button>
