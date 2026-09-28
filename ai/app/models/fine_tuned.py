@@ -131,11 +131,13 @@ class FineTunedHTTPModel(DataPilotModel):
                             raw_content = response.text
 
                         return _extract_json_from_text(raw_content)
-                except httpx.HTTPError as e:
+                    continue
+                except Exception as e:
                     last_error = e
                     continue
 
-        raise ModelExecutionError(f"HTTP model endpoint inference failed on {self.endpoint}: {last_error}")
+        logger.warning(f"HTTP model endpoint unreachable ({last_error}). Falling back to local deterministic model.")
+        return await MockRuleBasedModel().generate_workflow_spec(user_requirement)
 
 
 class MockRuleBasedModel(DataPilotModel):
@@ -150,7 +152,9 @@ class MockRuleBasedModel(DataPilotModel):
 
         # Entity type detection
         entity_type = "company"
-        if "job" in req_lower or "hiring" in req_lower:
+        if "intern" in req_lower:
+            entity_type = "internship"
+        elif "job" in req_lower or "hiring" in req_lower:
             entity_type = "job"
         elif "lead" in req_lower or "contact" in req_lower:
             entity_type = "lead"
@@ -161,6 +165,10 @@ class MockRuleBasedModel(DataPilotModel):
 
         # Filters
         filters = {}
+        if "backend" in req_lower:
+            filters["role"] = "backend"
+        elif "frontend" in req_lower:
+            filters["role"] = "frontend"
         if "india" in req_lower or "indian" in req_lower:
             filters["country"] = "India"
         if "saas" in req_lower:
@@ -190,10 +198,13 @@ class MockRuleBasedModel(DataPilotModel):
             if term in req_lower and f_name not in fields:
                 fields.append(f_name)
 
-        if not fields:
-            fields = ["company_name", "website", "founder"]
-        if entity_type == "company" and "company_name" not in fields:
+        # Always ensure core identity fields are present
+        if "company_name" not in fields:
             fields.insert(0, "company_name")
+        if "website" not in fields:
+            fields.append("website")
+        if entity_type in ("job", "internship") and "role" not in fields:
+            fields.append("role")
 
         output_format = "table"
         if "excel" in req_lower or "xlsx" in req_lower or "spreadsheet" in req_lower:
@@ -216,7 +227,7 @@ class MockRuleBasedModel(DataPilotModel):
                 "How many results do you want?",
             ]
 
-        validation_rules = [f"{f}_required" for f in fields[:2]]
+        validation_rules = ["company_name_required"]
         if "website" in fields:
             validation_rules.append("website_valid_url")
         if "email" in fields:
@@ -226,6 +237,28 @@ class MockRuleBasedModel(DataPilotModel):
         validation_rules.extend(["source_url_required", "duplicate_check_required"])
         if "confidence_score_required" not in validation_rules:
             validation_rules.append("confidence_score_required")
+
+        # Detect email outreach intent
+        mail_intent_terms = ["mail them", "email them", "send email", "send mail", "cold mail", "outreach", "mail to them", "email to them"]
+        enable_email_outreach = any(term in req_lower for term in mail_intent_terms)
+
+        # Extract sender email if provided in prompt (e.g. "with my email id anshul@gmail.com")
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+        email_matches = re.findall(email_pattern, user_requirement)
+        sender_email = email_matches[0] if email_matches else None
+
+        # Detect role or topic for outreach
+        outreach_role = None
+        if "internship" in req_lower or "intern" in req_lower:
+            outreach_role = "Backend Engineering Internship" if "backend" in req_lower else "Software Engineering Internship"
+        elif "backend" in req_lower:
+            outreach_role = "Backend Developer Opportunity"
+        elif "founder" in req_lower or "lead" in req_lower:
+            outreach_role = "Business Partnership & Introduction"
+
+        # Ensure contact email is in extracted fields if outreach is requested
+        if enable_email_outreach and "email" not in fields:
+            fields.append("email")
 
         return {
             "intent": f"extract_{entity_type}s",
@@ -247,7 +280,11 @@ class MockRuleBasedModel(DataPilotModel):
             "plan_summary": (
                 f"Find {target_count} {entity_type} records, collect requested fields, "
                 f"verify source links, remove duplicates, and return {output_format} output."
+                + (" Send automated outreach emails to verified contacts." if enable_email_outreach else "")
             ),
+            "enable_email_outreach": enable_email_outreach,
+            "sender_email": sender_email,
+            "outreach_role_or_topic": outreach_role,
         }
 
 

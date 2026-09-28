@@ -46,6 +46,9 @@ def generate_plan_from_spec(spec: dict[str, Any]) -> dict[str, Any]:
         include_confidence_score=include_confidence_score,
         missing_field_strategy=missing_field_strategy,
         plan_summary=plan_summary,
+        enable_email_outreach=spec.get("enable_email_outreach", False),
+        sender_email=spec.get("sender_email"),
+        outreach_role_or_topic=spec.get("outreach_role_or_topic"),
     )
     return plan.model_dump()
 

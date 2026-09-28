@@ -141,9 +141,29 @@ class DataParserTool:
             li_match = re.search(r"https?://(www\.)?linkedin\.com/(in|company)/[^\s<>\"']+", text)
             record["linkedin_url"] = li_match.group(0).rstrip(".,;") if li_match else None
 
+        if "email" in fields:
+            email_match = re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", text)
+            if email_match:
+                record["email"] = email_match.group(0).strip()
+            elif record.get("website"):
+                clean_dom = str(record["website"]).replace("https://", "").replace("http://", "").split("/")[0]
+                record["email"] = f"careers@{clean_dom}"
+            else:
+                record["email"] = None
+
         if "company_name" in fields:
-            name_match = re.search(r"([A-Z][A-Za-z0-9\s&]{2,30})\s*(?:Inc|Ltd|Technologies|SaaS|Pvt|Private|Corp)?", text)
-            record["company_name"] = name_match.group(0).strip() if name_match else None
+            prefix_match = re.search(r"(?:Company|Startup|Organization)\s*[:=\-]\s*([A-Za-z0-9\s&]{2,30})", text, re.I)
+            if prefix_match:
+                record["company_name"] = prefix_match.group(1).strip()
+            else:
+                name_match = re.search(r"([A-Z][A-Za-z0-9\s&]{2,30})\s*(?:Inc|Ltd|Technologies|SaaS|Pvt|Private|Corp)?", text)
+                record["company_name"] = name_match.group(0).strip() if name_match else None
+
+        if "role" in fields or "job_title" in fields:
+            role_key = "role" if "role" in fields else "job_title"
+            role_match = re.search(r"(?:Role|Position|Job Title)\s*[:=\-]\s*([^\n;]+)", text, re.I)
+            if role_match:
+                record[role_key] = role_match.group(1).strip()
 
         if "founder" in fields:
             founder_match = re.search(r"(?:founded by|founder:?|ceo:?)\s*([A-Z][a-z]+\s+[A-Z][a-z]+)", text, re.I)
@@ -153,12 +173,11 @@ class DataParserTool:
             funding_match = re.search(r"\b(Seed|Series A|Series B|Series C|Pre-Seed|Bootstrapped|Grant|Acquired)\b", text, re.I)
             record["funding_stage"] = funding_match.group(1).title() if funding_match else None
 
-        # 2. Generic key-value extractor for ANY requested field (job_title, salary, email, upvotes, etc.)
+        # 2. Generic key-value extractor for ANY other requested field
         for f in fields:
             if f not in record or record[f] is None:
-                # Convert field_name like "job_title" -> "job title" or "job_title"
                 label = f.replace("_", " ")
-                pattern = re.compile(rf"(?:{re.escape(label)}|{re.escape(f)})\s*[:=\-]\s*([^\n;,.]+)", re.I)
+                pattern = re.compile(rf"(?:{re.escape(label)}|{re.escape(f)})\s*[:=\-]\s*([^\n;]+)", re.I)
                 match = pattern.search(text)
                 if match:
                     val = match.group(1).strip()
