@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 MAX_PARALLEL_SOURCES = int(os.getenv("MAX_PARALLEL_SOURCES", "6"))
 MAX_SOURCE_CANDIDATES = int(os.getenv("MAX_SOURCE_CANDIDATES", "30"))
 FIRECRAWL_SOURCE_LIMIT = int(os.getenv("FIRECRAWL_SOURCE_LIMIT", "8"))
-ENABLE_PLAYWRIGHT = os.getenv("ENABLE_PLAYWRIGHT", "true").lower() not in {"0", "false", "no"}
+ENABLE_PLAYWRIGHT = os.getenv("ENABLE_PLAYWRIGHT", "false").lower() in {"1", "true", "yes"}
 
 
 def _snippet_doc(src: dict[str, Any]) -> dict[str, Any] | None:
