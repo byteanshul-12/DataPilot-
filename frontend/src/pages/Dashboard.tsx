@@ -59,7 +59,7 @@ export default function Dashboard() {
 
         {/* grid  */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.070]"
+          className="pointer-events-none absolute inset-0 opacity-[0.1]"
           style={{
             backgroundImage: `
               linear-gradient(to right, #ffffff 1px, transparent 1px),
@@ -85,7 +85,7 @@ export default function Dashboard() {
                 <div className="mb-7 text-center">
                   
 
-                  <h2 className="text-2xl font-semibold tracking-tight text-white mt-15 mb-15">
+                  <h2 className="text-4xl font-semibold tracking-tight text-white mt-15 mb-15 text-shadow-lg shadow-blue-500/50">
                     Collect Datas Easier Then Before
                   </h2>
 

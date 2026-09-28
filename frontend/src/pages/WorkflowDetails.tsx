@@ -87,7 +87,7 @@ export default function WorkflowDetails() {
         <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-black text-white">
 
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            className="pointer-events-none absolute inset-0 opacity-[0.1]"
             style={{
               backgroundImage: `
                 linear-gradient(to right, #ffffff 1px, transparent 1px),
