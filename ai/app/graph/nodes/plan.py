@@ -23,12 +23,25 @@ def generate_plan_from_spec(spec: dict[str, Any]) -> dict[str, Any]:
     plan_summary = spec.get("plan_summary", "")
 
     # Generate targeted search queries
-    filter_terms = " ".join([f"{k} {v}" for k, v in filters.items()])
+    if spec.get("needs_clarification") or entity == "conversation":
+        return ExecutionPlan(queries=[], fields=[], plan_summary=spec.get("plan_summary", "")).model_dump()
+    filter_terms = " ".join("(" + " OR ".join(str(item) for item in v) + ")" if isinstance(v, list) else str(v) for v in filters.values())
     queries = [
         f"{filter_terms} {entity} list database".strip(),
         f"top {filter_terms} {entity}s".strip(),
         f"find {filter_terms} {entity} directory".strip()
     ]
+    if entity == "job":
+        queries = [f'{filter_terms} jobs careers apply',
+                   f'{filter_terms} jobs site:jobs.lever.co',
+                   f'{filter_terms} jobs site:boards.greenhouse.io',
+                   f'{filter_terms} jobs site:jobs.ashbyhq.com']
+    elif entity == "company":
+        queries = [f"{filter_terms} companies official website",
+                   f"{filter_terms} companies site:revenuebase.ai/companies",
+                   f"{filter_terms} companies directory"]
+        if filters.get("accelerator"):
+            queries[1] = f"{filter_terms} site:ycombinator.com/companies"
     # Clean up excess spaces in queries
     queries = [" ".join(q.split()) for q in queries if q.strip()]
     if not queries:

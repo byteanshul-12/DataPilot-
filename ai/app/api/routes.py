@@ -18,6 +18,7 @@ from app.graph.nodes.plan import generate_plan_from_spec
 from app.models.fine_tuned import get_model
 from app.schemas.workflow import WorkflowSpecification
 from app.services.task_manager import TaskManager
+from app.services.request_policy import interpret_request, response_status, reply_for
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,9 @@ async def analyze_requirement(req: AnalyzeRequest):
 
     try:
         model = get_model()
-        raw_spec = await model.generate_workflow_spec(req.requirement)
+        raw_spec = await interpret_request(req.requirement, model)
         validated_spec = WorkflowSpecification(**raw_spec).model_dump()
-        return AnalyzeResponse(specification=validated_spec)
+        return AnalyzeResponse(specification=validated_spec, status=response_status(validated_spec), reply=reply_for(validated_spec))
     except Exception as e:
         logger.error(f"Error in /api/v1/analyze: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Model analysis failed: {str(e)}")
@@ -55,10 +56,10 @@ async def plan_workflow(req: WorkflowPlanRequest):
 
     try:
         model = get_model()
-        raw_spec = await model.generate_workflow_spec(req.requirement)
+        raw_spec = await interpret_request(req.requirement, model)
         validated_spec = WorkflowSpecification(**raw_spec).model_dump()
         plan_dict = generate_plan_from_spec(validated_spec)
-        return WorkflowPlanResponse(specification=validated_spec, plan=plan_dict)
+        return WorkflowPlanResponse(specification=validated_spec, plan=plan_dict, status=response_status(validated_spec), reply=reply_for(validated_spec))
     except Exception as e:
         logger.error(f"Error in /api/v1/workflow/plan: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Workflow planning failed: {str(e)}")
@@ -70,9 +71,20 @@ async def run_workflow(req: WorkflowRunRequest):
     if not req.requirement.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Requirement text cannot be empty.")
 
+    try:
+        spec = await interpret_request(req.requirement, get_model())
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Request understanding is unavailable. No scrape was started. Please retry.") from exc
     task_id = task_manager.create_task(req.requirement)
-    task_manager.start_task_background(task_id)
-    return WorkflowRunResponse(task_id=task_id, status="queued")
+    info = task_manager.get_task_status(task_id)
+    info["specification"] = spec
+    info["reply"] = reply_for(spec)
+    route = response_status(spec)
+    if route == "ready":
+        task_manager.start_task_background(task_id)
+    else:
+        info["status"] = route
+    return WorkflowRunResponse(task_id=task_id, status=info["status"], reply=info["reply"], clarification_questions=spec.get("clarification_questions", []))
 
 
 @router.get("/api/v1/workflows/{task_id}", response_model=WorkflowStatusResponse)
@@ -87,6 +99,8 @@ async def get_workflow_status(task_id: str):
         task_id=task_id,
         status=task_info.get("status", "unknown"),
         progress=progress,
+        reply=task_info.get("reply", ""),
+        clarification_questions=task_info.get("specification", {}).get("clarification_questions", []),
         errors=task_info.get("errors", [])
     )
 
@@ -99,11 +113,17 @@ async def get_workflow_results(task_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task ID {task_id} not found.")
 
     records = task_info.get("result_records", [])
+    records = [{k: v for k, v in record.items() if k not in {"_context", "_entity_type", "_relevance_verified", "_requested_fields"}} for record in records]
     return WorkflowResultResponse(
         task_id=task_id,
         status=task_info.get("status", "unknown"),
         records=records,
-        total=len(records)
+        reply=task_info.get("reply", ""),
+        clarification_questions=task_info.get("specification", {}).get("clarification_questions", []),
+        total=len(records),
+        requested_count=task_info.get("specification", {}).get("target_count", 0),
+        target_met=bool(task_info.get("specification", {}).get("target_count")) and len(records) >= task_info.get("specification", {}).get("target_count", 0),
+        errors=task_info.get("errors", []),
     )
 
 

@@ -1,10 +1,11 @@
 import logging
-import re
 from typing import Any
 
 from app.graph.state import WorkflowState
 from app.models.fine_tuned import get_model
+from app.models.base import ModelExecutionError
 from app.schemas.workflow import WorkflowSpecification
+from app.services.request_policy import interpret_request
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ async def understand_node(state: WorkflowState) -> dict[str, Any]:
     model = get_model()
 
     try:
-        raw_spec = await model.generate_workflow_spec(user_req)
+        raw_spec = state.get("specification") or await interpret_request(user_req, model)
         
         # Validate spec schema using Pydantic model
         validated_spec = WorkflowSpecification(**raw_spec).model_dump()
@@ -31,34 +32,4 @@ async def understand_node(state: WorkflowState) -> dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Error in UNDERSTAND node: {e}")
-        errors.append(f"UnderstandNode failure: {str(e)}")
-        
-        # Provide clean fallback specification on error
-        count_match = re.search(r"\b(\d+)\b", user_req)
-        fallback_count = int(count_match.group(1)) if count_match else (state.get("target_count") or 10)
-        fallback_spec = WorkflowSpecification(
-            intent="find_entities",
-            target_count=fallback_count,
-            entity_type="company",
-            filters={},
-            fields=["company_name", "website"],
-            source_types=["company_website"],
-            deduplication_key=["company_name"],
-            validation_rules=["company_name_required", "source_url_required"],
-            output_format="table",
-            fallback_sources=["search_engine", "company_website"],
-            include_source_url=True,
-            include_confidence_score=True,
-            source_required_for_each_row=True,
-            missing_field_strategy="retry_with_fallback_sources",
-            needs_clarification=False,
-            clarification_questions=[],
-            plan_summary="Find company records, verify source links, and return a table."
-        ).model_dump()
-
-        return {
-            "specification": fallback_spec,
-            "target_count": fallback_spec["target_count"],
-            "errors": errors,
-            "status": "understanding_fallback"
-        }
+        raise ModelExecutionError("Requirement analysis failed; collection stopped to avoid dropping requested filters.") from e

@@ -1,11 +1,18 @@
 import asyncio
 import logging
+import os
 import uuid
 from typing import Any, Optional
 
 from app.graph.workflow import build_collection_graph
 
 logger = logging.getLogger(__name__)
+
+
+async def bounded_states(graph, state):
+    async with asyncio.timeout(float(os.getenv("WORKFLOW_TIMEOUT_SECONDS", "180"))):
+        async for snapshot in graph.astream(state, config={"recursion_limit": 50}, stream_mode="values"):
+            yield snapshot
 
 
 class TaskManager:
@@ -56,7 +63,7 @@ class TaskManager:
         initial_state = {
             "task_id": task_id,
             "user_requirement": task_info["user_requirement"],
-            "specification": {},
+            "specification": task_info.get("specification", {}),
             "search_queries": [],
             "discovered_sources": [],
             "raw_documents": [],
@@ -70,12 +77,30 @@ class TaskManager:
         }
 
         try:
-            final_state = await self._graph.ainvoke(initial_state)
+            final_state = initial_state
+            async for snapshot in bounded_states(self._graph, initial_state):
+                final_state = snapshot
+                task_info["specification"] = snapshot.get("specification", {})
+                task_info["result_records"] = snapshot.get("deduplicated_records", [])
+                task_info["errors"] = snapshot.get("errors", [])
+                task_info["progress"] = {
+                    "sources_discovered": len(snapshot.get("discovered_sources", [])),
+                    "records_extracted": len(snapshot.get("extracted_records", [])),
+                    "records_validated": len(snapshot.get("validated_records", [])),
+                    "records_deduplicated": len(snapshot.get("deduplicated_records", [])),
+                }
 
-            task_info["status"] = "completed"
+            from app.services.request_policy import response_status, reply_for
+            route = response_status(final_state.get("specification", {}))
+            task_info["status"] = "completed" if route == "ready" else route
+            task_info["reply"] = reply_for(final_state.get("specification", {}))
             task_info["specification"] = final_state.get("specification", {})
             task_info["result_records"] = final_state.get("deduplicated_records", [])
             task_info["errors"] = final_state.get("errors", [])
+            requested = final_state.get("target_count", 10)
+            if route == "ready" and len(task_info["result_records"]) < requested:
+                task_info["status"] = "partial"
+                task_info["errors"].append(f"Partial result: {len(task_info['result_records'])} of {requested} requested records passed evidence and relevance checks.")
             task_info["progress"] = {
                 "sources_discovered": len(final_state.get("discovered_sources", [])),
                 "records_extracted": len(final_state.get("extracted_records", [])),
@@ -83,6 +108,9 @@ class TaskManager:
                 "records_deduplicated": len(final_state.get("deduplicated_records", []))
             }
             logger.info(f"Task task_id={task_id} completed successfully with {len(task_info['result_records'])} records.")
+        except TimeoutError:
+            task_info["status"] = "partial" if task_info["result_records"] else "failed"
+            task_info["errors"].append("Collection time budget exhausted. Any previously validated results have been retained.")
         except asyncio.CancelledError:
             task_info["status"] = "cancelled"
             logger.warning(f"Task task_id={task_id} was cancelled.")
@@ -101,7 +129,7 @@ class TaskManager:
             return False
 
         task_info = self._tasks[task_id]
-        if task_info["status"] in ("completed", "failed", "cancelled"):
+        if task_info["status"] in ("completed", "partial", "answered", "needs_clarification", "failed", "cancelled"):
             return True
 
         async_task = self._async_tasks.get(task_id)

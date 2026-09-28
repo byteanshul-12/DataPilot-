@@ -23,14 +23,17 @@ class PlaywrightBrowserTool:
                 context = await browser.new_context(
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 )
-                page = await context.new_page()
-                await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_ms)
-                
-                title = await page.title()
-                html = await page.content()
-                text_content = await page.inner_text("body")
-
-                await browser.close()
+                try:
+                    page = await context.new_page()
+                    response = await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_ms)
+                    if response and response.status >= 400:
+                        return None
+                    await page.locator("body").wait_for(timeout=self.timeout_ms)
+                    title = await page.title()
+                    html = await page.content()
+                    text_content = await page.inner_text("body")
+                finally:
+                    await browser.close()
 
                 return {
                     "url": url,
@@ -40,7 +43,9 @@ class PlaywrightBrowserTool:
                     "_source": {
                         "url": url,
                         "title": title,
-                        "retrieved_by": "playwright"
+                        "retrieved_by": "playwright",
+                        "source_type": "rendered_page",
+                        "source_quality_score": 60,
                     }
                 }
         except Exception as e:

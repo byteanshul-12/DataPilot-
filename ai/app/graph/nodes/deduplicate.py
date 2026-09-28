@@ -4,6 +4,7 @@ from typing import Any
 from rapidfuzz import fuzz
 
 from app.graph.state import WorkflowState
+from app.tools.quality import clean_company_name, record_confidence
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,10 @@ async def deduplicate_node(state: WorkflowState) -> dict[str, Any]:
     deduplicated_records: list[dict[str, Any]] = []
 
     for rec in validated_records:
+        rec = dict(rec)
+        if spec.get("entity_type") == "company" and not clean_company_name(rec.get("company_name")) and not rec.get("website"):
+            continue
+        rec["confidence_score"] = record_confidence(rec)
         rec_key = get_dedup_key_str(rec, dedup_keys)
         rec_website = normalize_value(rec.get("website"))
         rec_name = normalize_value(rec.get("company_name"))
@@ -47,7 +52,7 @@ async def deduplicate_node(state: WorkflowState) -> dict[str, Any]:
         if "_source" in rec and rec["_source"]:
             rec_sources.append(rec["_source"])
         if "_sources" in rec:
-            rec_sources.extend(rec["_sources"])
+            rec_sources.extend(s for s in rec["_sources"] if s not in rec_sources)
 
         matched = False
         for existing in deduplicated_records:
@@ -56,15 +61,17 @@ async def deduplicate_node(state: WorkflowState) -> dict[str, Any]:
             existing_name = normalize_value(existing.get("company_name"))
 
             # Step 1: Matching websites (if present in both)
-            if rec_website and existing_website and rec_website == existing_website:
+            if spec.get("entity_type") == "job":
+                matched = bool(rec_key and rec_key == existing_key)
+            elif rec_website and existing_website and rec_website == existing_website:
                 matched = True
             # Step 2: Exact normalized key match
             elif rec_key and existing_key and rec_key == existing_key:
                 matched = True
             # Step 3: High confidence fuzzy match on company names (>= 85 token_set_ratio)
             elif rec_name and existing_name and len(rec_name) > 3 and len(existing_name) > 3:
-                ratio = fuzz.token_set_ratio(rec_name, existing_name)
-                if ratio >= 85:
+                ratio = fuzz.ratio(rec_name, existing_name)
+                if ratio >= 95:
                     matched = True
 
             if matched:
@@ -85,8 +92,12 @@ async def deduplicate_node(state: WorkflowState) -> dict[str, Any]:
             new_rec["_sources"] = rec_sources
             deduplicated_records.append(new_rec)
 
+    deduplicated_records.sort(key=lambda item: item.get("confidence_score") or 0, reverse=True)
+
     current_iter = state.get("iteration", 1)
     target_count = state.get("target_count", 10)
+    if len(deduplicated_records) > target_count:
+        deduplicated_records = deduplicated_records[:target_count]
     errors = list(state.get("errors", []))
 
     if current_iter >= 5 and len(deduplicated_records) < target_count:
@@ -97,10 +108,18 @@ async def deduplicate_node(state: WorkflowState) -> dict[str, Any]:
 
     logger.info(f"DEDUPLICATE node reduced {len(validated_records)} validated records to {len(deduplicated_records)} unique deduplicated records.")
 
+    queries = list(state.get("search_queries", []))
+    if len(deduplicated_records) < target_count and spec.get("entity_type") == "company":
+        filters = " ".join(str(v) for v in spec.get("filters", {}).values())
+        names = list(dict.fromkeys(clean_company_name(r.get("company_name")) for r in state.get("extracted_records", [])))
+        names = [name for name in names if name][:4]
+        if names:
+            queries = [f'"{name}" {filters} official website founder' for name in names]
     return {
         "deduplicated_records": deduplicated_records,
         "iteration": current_iter + 1,
         "errors": errors,
+        "search_queries": queries,
         "status": "deduplication_completed"
     }
 
