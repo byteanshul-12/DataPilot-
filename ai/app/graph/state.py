@@ -26,3 +26,5 @@ class WorkflowState(TypedDict):
     iteration: int
 
     status: str
+    attempted_urls: list[str]
+    semantic_urls: list[str]

@@ -12,6 +12,8 @@ class AnalyzeRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
+    status: str = "ready"
+    reply: str = ""
     specification: dict[str, Any] = Field(..., description="Structured specification produced by fine-tuned model")
 
 
@@ -20,6 +22,8 @@ class WorkflowPlanRequest(BaseModel):
 
 
 class WorkflowPlanResponse(BaseModel):
+    status: str = "ready"
+    reply: str = ""
     specification: dict[str, Any]
     plan: dict[str, Any]
 
@@ -31,6 +35,8 @@ class WorkflowRunRequest(BaseModel):
 class WorkflowRunResponse(BaseModel):
     task_id: str
     status: str = "queued"
+    reply: str = ""
+    clarification_questions: list[str] = Field(default_factory=list)
 
 
 class WorkflowProgressMetrics(BaseModel):
@@ -42,6 +48,8 @@ class WorkflowProgressMetrics(BaseModel):
 
 
 class WorkflowStatusResponse(BaseModel):
+    reply: str = ""
+    clarification_questions: list[str] = Field(default_factory=list)
     task_id: str
     status: str
     progress: WorkflowProgressMetrics
@@ -49,11 +57,16 @@ class WorkflowStatusResponse(BaseModel):
 
 
 class WorkflowResultResponse(BaseModel):
+    reply: str = ""
+    clarification_questions: list[str] = Field(default_factory=list)
     task_id: str
     status: str
     records: list[dict[str, Any]] = Field(default_factory=list)
     outreach_emails: list[dict[str, Any]] = Field(default_factory=list)
     total: int = 0
+    requested_count: int = 0
+    target_met: bool = False
+    errors: list[str] = Field(default_factory=list)
 
 
 class CancelWorkflowResponse(BaseModel):

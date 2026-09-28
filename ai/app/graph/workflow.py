@@ -15,7 +15,7 @@ from app.graph.state import WorkflowState
 
 logger = logging.getLogger(__name__)
 
-MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", "5"))
+MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", "3"))
 
 
 def check_target_condition(state: WorkflowState) -> Literal["search", "email_outreach"]:
@@ -29,10 +29,21 @@ def check_target_condition(state: WorkflowState) -> Literal["search", "email_out
         f"(Iteration {current_iteration}/{MAX_ITERATIONS})"
     )
 
+<<<<<<< HEAD
+    sources = state.get("discovered_sources", [])
+    scraped = {d.get("url") for d in state.get("raw_documents", [])}
+    scraped.update(state.get("attempted_urls", []))
+    exhausted = current_iteration > 2 and all(s.get("url") in scraped for s in sources)
+    if dedup_count >= target_count or current_iteration > MAX_ITERATIONS or exhausted:
+        logger.info(f"[{state.get('task_id')}] Workflow completing: target achieved or max iterations reached.")
+        return END
+    
+=======
     if dedup_count >= target_count or current_iteration > MAX_ITERATIONS:
         logger.info(f"[{state.get('task_id')}] Target achieved or max iterations reached. Transitioning to email outreach.")
         return "email_outreach"
 
+>>>>>>> 0966c3599910bff33383524632d015ed41017729
     logger.info(f"[{state.get('task_id')}] Target not yet reached. Looping back to SEARCH node.")
     return "search"
 
@@ -54,7 +65,7 @@ def build_collection_graph():
     workflow.set_entry_point("understand")
 
     # Linear transitions
-    workflow.add_edge("understand", "plan")
+    workflow.add_conditional_edges("understand", lambda state: END if state.get("specification", {}).get("needs_clarification") or state.get("specification", {}).get("entity_type") == "conversation" else "plan", {END: END, "plan": "plan"})
     workflow.add_edge("plan", "search")
     workflow.add_edge("search", "extract")
     workflow.add_edge("extract", "validate")

@@ -33,8 +33,8 @@ async def test_full_e2e_pipeline_mocked():
             "url": "https://tech-india.com/saas-2023",
             "title": "Top Indian SaaS Startups 2023",
             "content": """
-            Company: Acme Analytics. Founder: Rajesh Kumar. Website: https://acmeanalytics.io. Funding Stage: Seed.
-            Company: DataSync AI. Founder: Priya Sharma. Website: https://datasync.ai. Funding Stage: Series A.
+            Company: Acme Analytics. Founder: Rajesh Kumar. Website: https://acmeanalytics.io. Funding Stage: Seed. India SaaS. Founded year: 2023.
+            Company: DataSync AI. Founder: Priya Sharma. Website: https://datasync.ai. Funding Stage: Series A. India SaaS. Founded year: 2024.
             """,
             "source": "tavily"
         }

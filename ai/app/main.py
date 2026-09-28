@@ -5,9 +5,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import router
-
 load_dotenv()
+
+from app.api.routes import router
 
 # Configure structured logging
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()

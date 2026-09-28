@@ -175,6 +175,15 @@ class MockRuleBasedModel(DataPilotModel):
             filters["industry"] = "SaaS"
         if "fintech" in req_lower:
             filters["industry"] = "fintech"
+        if re.search(r"\b(ai|artificial intelligence|machine learning)\b", req_lower):
+            filters["specialization"] = "artificial intelligence"
+        for city in ("Bengaluru", "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Pune"):
+            if city.lower() in req_lower:
+                filters["city"] = city
+        if "hr tech" in req_lower or "hrtech" in req_lower:
+            filters["specialization"] = "HR tech"
+        if "yc-backed" in req_lower or "y combinator" in req_lower:
+            filters["accelerator"] = "Y Combinator"
             
         founded_match = re.search(r"founded after (\d{4})", req_lower)
         if founded_match:
@@ -201,10 +210,15 @@ class MockRuleBasedModel(DataPilotModel):
         # Always ensure core identity fields are present
         if "company_name" not in fields:
             fields.insert(0, "company_name")
+<<<<<<< HEAD
+        if entity_type == "job":
+            fields = list(dict.fromkeys(["job_title", "company_name", "location", "application_link"] + fields))
+=======
         if "website" not in fields:
             fields.append("website")
         if entity_type in ("job", "internship") and "role" not in fields:
             fields.append("role")
+>>>>>>> 0966c3599910bff33383524632d015ed41017729
 
         output_format = "table"
         if "excel" in req_lower or "xlsx" in req_lower or "spreadsheet" in req_lower:
@@ -266,9 +280,9 @@ class MockRuleBasedModel(DataPilotModel):
             "entity_type": entity_type,
             "filters": filters,
             "fields": fields,
-            "source_types": ["company_website", "linkedin", "startup_database", "news"],
+            "source_types": ["job_board", "company_careers_page"] if entity_type == "job" else ["company_website", "linkedin", "startup_database", "news"],
             "fallback_sources": ["search_engine", "company_website", "linkedin", "news"],
-            "deduplication_key": ["company_name", "website"] if "website" in fields else ["company_name"],
+            "deduplication_key": ["company_name", "job_title", "location"] if entity_type == "job" else (["company_name", "website"] if "website" in fields else ["company_name"]),
             "validation_rules": validation_rules,
             "output_format": output_format,
             "include_source_url": True if needs_proof or True else False,
@@ -288,6 +302,30 @@ class MockRuleBasedModel(DataPilotModel):
         }
 
 
+class OllamaPlanningModel(DataPilotModel):
+    """Schema-constrained local planner, with no silent fallback to company search."""
+    async def generate_workflow_spec(self, user_requirement: str) -> dict[str, Any]:
+        from app.schemas.workflow import WorkflowSpecification
+        schema = WorkflowSpecification.model_json_schema()
+        prompt = SYSTEM_PROMPT + (
+            " Roles, positions and vacancies mean jobs. Preserve job role, technology, city and country in filters."
+            " Use canonical filter keys role, technology, city, country, work_mode, industry, specialization, founded_after, accelerator."
+            " For a job request without explicit fields use only job_title, company_name, location, application_link."
+            " Never invent a location or discard a user constraint. Ask for clarification on ambiguous places."
+            " Greetings are entity_type conversation, intent conversation, target_count 0, with a friendly plan_summary."
+            " Use entity_type job for job requests; company for company requests. Return only requested fields plus identity fields."
+        )
+        endpoint = os.getenv("MODEL_ENDPOINT", "http://127.0.0.1:11434").rstrip("/")
+        async with httpx.AsyncClient(timeout=90) as client:
+            response = await client.post(endpoint + "/api/chat", json={
+                "model": os.getenv("MODEL_NAME", "qwen2.5:7b"), "stream": False,
+                "format": schema, "options": {"temperature": 0, "num_ctx": 4096, "num_predict": 1600},
+                "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": user_requirement}],
+            })
+            response.raise_for_status()
+            return WorkflowSpecification.model_validate_json(response.json()["message"]["content"]).model_dump()
+
+
 def get_model() -> DataPilotModel:
     """Factory function to instantiate the configured single fine-tuned model instance."""
     provider = os.getenv("MODEL_PROVIDER", "http").lower()
@@ -295,7 +333,9 @@ def get_model() -> DataPilotModel:
     model_name = os.getenv("MODEL_NAME", "datapilot-model")
     api_key = os.getenv("MODEL_API_KEY", "")
 
-    if provider in ("http", "endpoint", "vllm", "ollama"):
+    if provider == "ollama":
+        return OllamaPlanningModel()
+    if provider in ("http", "endpoint", "vllm"):
         return FineTunedHTTPModel(endpoint=endpoint, model_name=model_name, api_key=api_key)
     elif provider in ("mock", "test", "rule_based"):
         return MockRuleBasedModel()
