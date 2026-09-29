@@ -25,6 +25,13 @@ export const auth = betterAuth({
     process.env.FRONTEND_URL || '',
     ...(process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map((s) => s.trim()) : []),
   ].filter(Boolean),
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      partitioned: process.env.NODE_ENV === 'production',
+    },
+  },
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
