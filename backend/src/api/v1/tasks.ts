@@ -36,19 +36,18 @@ tasksRouter.post('/', requireUserOrGuest, async (req, res) => {
     })
     .returning();
 
-  // Try queueing in Redis
-  try {
-    await collectionQueue.add('execute-workflow', { taskId: task.id, prompt: task.prompt });
-  } catch (err) {
-    console.warn('Redis queue add failed, falling back to direct background execution:', err);
-  }
+  // Respond immediately with created task
+  res.status(201).json(task);
+
+  // Queue in Redis non-blockingly
+  collectionQueue
+    .add('execute-workflow', { taskId: task.id, prompt: task.prompt })
+    .catch((err) => console.warn('Redis queue add warning:', err));
 
   // Trigger task execution asynchronously
   processTaskExecution(task.id, task.prompt).catch((err) =>
     console.error(`Async execution error for task ${task.id}:`, err)
   );
-
-  res.status(201).json(task);
 });
 
 tasksRouter.get('/', requireUserOrGuest, async (req, res) => {
