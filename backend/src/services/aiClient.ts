@@ -23,7 +23,11 @@ export interface AIExecutionResult {
 }
 
 export async function executeAIWorkflow(taskId: string, prompt: string): Promise<AIExecutionResult> {
-  const url = `${env.AI_SERVICE_URL.replace(/\/$/, '')}/api/v1/execute`;
+  let baseUrl = env.AI_SERVICE_URL || 'http://localhost:8001';
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  const url = `${baseUrl.replace(/\/$/, '')}/api/v1/execute`;
 
   try {
     const response = await fetch(url, {
