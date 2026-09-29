@@ -7,6 +7,49 @@ import { requireUserOrGuest } from '../../auth/middleware.js';
 
 export const workflowsRouter = Router();
 
+function mapStatus(status: string): 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' {
+  if (status === 'pending') return 'queued';
+  if (status === 'running') return 'running';
+  if (status === 'completed') return 'completed';
+  if (status === 'failed') return 'failed';
+  if (status === 'cancelled') return 'cancelled';
+  return 'queued';
+}
+
+function getExecutionSteps(status: string) {
+  const mapped = mapStatus(status);
+  if (mapped === 'completed') {
+    return [
+      { step: 'intent_parsing', status: 'completed' },
+      { step: 'source_discovery', status: 'completed' },
+      { step: 'data_scraping', status: 'completed' },
+      { step: 'deduplication', status: 'completed' },
+    ];
+  }
+  if (mapped === 'running') {
+    return [
+      { step: 'intent_parsing', status: 'completed' },
+      { step: 'source_discovery', status: 'completed' },
+      { step: 'data_scraping', status: 'running' },
+      { step: 'deduplication', status: 'pending' },
+    ];
+  }
+  if (mapped === 'failed') {
+    return [
+      { step: 'intent_parsing', status: 'completed' },
+      { step: 'source_discovery', status: 'failed' },
+      { step: 'data_scraping', status: 'pending' },
+      { step: 'deduplication', status: 'pending' },
+    ];
+  }
+  return [
+    { step: 'intent_parsing', status: 'pending' },
+    { step: 'source_discovery', status: 'pending' },
+    { step: 'data_scraping', status: 'pending' },
+    { step: 'deduplication', status: 'pending' },
+  ];
+}
+
 // Create new data collection workflow from prompt.
 workflowsRouter.post('/', requireUserOrGuest, async (req, res) => {
   const { prompt } = req.body;

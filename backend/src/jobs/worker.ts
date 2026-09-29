@@ -1,5 +1,6 @@
 // BullMQ background worker executing asynchronous data collection workflows.
 import { Worker } from 'bullmq';
+import { eq } from 'drizzle-orm';
 import { env } from '../config/env.js';
 import { processTaskExecution } from '../services/taskProcessor.js';
 

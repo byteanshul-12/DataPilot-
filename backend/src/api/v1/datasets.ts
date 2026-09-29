@@ -5,6 +5,7 @@ import { db } from '../../db/index.js';
 import { collectionResults, collectionTasks } from '../../db/schema.js';
 import { deduplicateRecords } from '../../services/deduplication.js';
 
+
 export const datasetsRouter = Router();
 
 // List collected dataset records for a specific workflow with search and filter.
@@ -42,7 +43,7 @@ datasetsRouter.get('/:workflowId', async (req, res) => {
   });
 });
 
-// Export collected dataset in CSV or JSON format.
+// Export collected dataset in Excel (.xlsx), CSV, or JSON format.
 datasetsRouter.get('/:workflowId/export', async (req, res) => {
   const { workflowId } = req.params;
   const { format = 'csv' } = req.query;

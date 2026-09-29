@@ -1,8 +1,10 @@
 // Environment variable validation using Zod.
 import dotenv from 'dotenv';
+import path from 'path';
 import { z } from 'zod';
 
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 const envSchema = z.object({
   PORT: z.string().default('8000'),

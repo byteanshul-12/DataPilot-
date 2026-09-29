@@ -21,6 +21,9 @@ import {
   Globe,
   Sparkles,
   FileText,
+  FileSpreadsheet,
+  Table,
+  Code2,
 } from "lucide-react";
 
 export default function WorkflowDetails() {
@@ -432,6 +435,20 @@ export default function WorkflowDetails() {
                   </Button>
 
                   <a
+                    href={api.getExportUrl(workflow.id, "xlsx")}
+                    download
+                  >
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 border-emerald-800/40 bg-emerald-950/20 text-xs text-emerald-400 hover:bg-emerald-900/30 hover:text-emerald-300"
+                    >
+                      <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                      Excel (.xlsx)
+                    </Button>
+                  </a>
+
+                  <a
                     href={api.getExportUrl(workflow.id, "csv")}
                     download
                   >
@@ -458,24 +475,6 @@ export default function WorkflowDetails() {
                       JSON
                     </Button>
                   </a>
-                  <div className="flex items-center overflow-hidden rounded-md border border-zinc-800 bg-black p-0.5">
-                    <button
-                      onClick={() => setViewFormat("ui")}
-                      className={`px-2.5 py-1 text-xs font-medium transition-colors rounded-sm ${
-                        viewFormat === "ui" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"
-                      }`}
-                    >
-                      UI List
-                    </button>
-                    <button
-                      onClick={() => setViewFormat("json")}
-                      className={`px-2.5 py-1 text-xs font-medium transition-colors rounded-sm ${
-                        viewFormat === "json" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"
-                      }`}
-                    >
-                      Raw JSON
-                    </button>
-                  </div>
 
                 </div>
 
@@ -486,7 +485,7 @@ export default function WorkflowDetails() {
 
                 <div className="border-b border-zinc-800 px-5 py-4">
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
                       <p className="text-sm font-medium text-zinc-200">
@@ -503,13 +502,38 @@ export default function WorkflowDetails() {
                       </p>
                     </div>
 
-                    <Database className="h-4 w-4 text-zinc-700" />
+                    <div className="flex items-center gap-1 rounded-md border border-zinc-800 bg-black p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setViewFormat("ui")}
+                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                          viewFormat === "ui"
+                            ? "bg-zinc-800 text-white"
+                            : "text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        <Table className="h-3.5 w-3.5" />
+                        UI List
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewFormat("json")}
+                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                          viewFormat === "json"
+                            ? "bg-zinc-800 text-white"
+                            : "text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        <Code2 className="h-3.5 w-3.5" />
+                        Raw JSON
+                      </button>
+                    </div>
 
                   </div>
 
                 </div>
 
-                <div className="p-5">
+                <div className="p-0">
 
                   {(() => {
                     const filteredRecords = records.filter((rec) => {
