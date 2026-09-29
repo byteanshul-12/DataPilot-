@@ -1,10 +1,10 @@
 // Express router for collected dataset querying, filtering, export, and deduplication.
 import { Router } from 'express';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { collectionResults } from '../../db/schema.js';
+import { collectionResults, collectionTasks } from '../../db/schema.js';
+import { deduplicateRecords } from '../../services/deduplication.js';
 
-import * as XLSX from 'xlsx';
 
 export const datasetsRouter = Router();
 
@@ -16,28 +16,30 @@ datasetsRouter.get('/:workflowId', async (req, res) => {
   const results = await db
     .select()
     .from(collectionResults)
-    .where(eq(collectionResults.taskId, workflowId));
+    .where(eq(collectionResults.taskId, workflowId))
+    .orderBy(desc(collectionResults.createdAt));
 
-  const records = results.map((r) => ({
+  let records = results.map((r) => ({
     id: r.id,
-    source: r.sourceUrl || 'direct-scraping',
-    data: r.data as Record<string, unknown>,
+    source: r.sourceUrl || 'https://web.datapilot.ai',
+    data: (r.data as Record<string, unknown>) || {},
     timestamp: r.createdAt.toISOString(),
   }));
 
-  const filtered = search
-    ? records.filter((r) => JSON.stringify(r.data).toLowerCase().includes(String(search).toLowerCase()))
-    : records;
+  if (search && typeof search === 'string') {
+    const q = search.toLowerCase();
+    records = records.filter((r) => JSON.stringify(r.data).toLowerCase().includes(q));
+  }
+
+  const numLimit = Number(limit);
+  const numPage = Number(page);
+  const offset = (numPage - 1) * numLimit;
+  const paginatedRecords = records.slice(offset, offset + numLimit);
 
   res.json({
     workflowId,
-    records: filtered,
-    meta: {
-      page: Number(page),
-      limit: Number(limit),
-      total: filtered.length,
-      searchQuery: search ? String(search) : null,
-    },
+    records: paginatedRecords,
+    meta: { page: numPage, limit: numLimit, total: records.length, searchQuery: search || null },
   });
 });
 
@@ -51,78 +53,96 @@ datasetsRouter.get('/:workflowId/export', async (req, res) => {
     .from(collectionResults)
     .where(eq(collectionResults.taskId, workflowId));
 
-  const flatRecords = results.map((r) => {
-    const d = (r.data as Record<string, unknown>) || {};
-    const flat: Record<string, any> = {};
-    for (const [k, v] of Object.entries(d)) {
-      if (k === '_sources') {
-        const sources = v as Array<{ url?: string }>;
-        flat['source_url'] = sources?.[0]?.url || r.sourceUrl || '';
-      } else {
-        flat[k] = v;
-      }
-    }
-    if (!flat['source_url'] && r.sourceUrl) {
-      flat['source_url'] = r.sourceUrl;
-    }
-    return flat;
-  });
-
-  if (format === 'xlsx' || format === 'excel') {
-    const worksheet = XLSX.utils.json_to_sheet(flatRecords);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Collected Data');
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=dataset_${workflowId}.xlsx`
-    );
-    return res.send(buffer);
-  }
+  const records = results.map((r) => ({
+    id: r.id,
+    source: r.sourceUrl,
+    data: r.data,
+    createdAt: r.createdAt.toISOString(),
+  }));
 
   if (format === 'csv') {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=dataset_${workflowId}.csv`);
 
-    if (flatRecords.length === 0) {
-      return res.send('id,source,data,timestamp\n');
+    if (records.length === 0) {
+      return res.send('id,source,data,createdAt\n');
     }
 
-    const headers = Array.from(new Set(flatRecords.flatMap((r) => Object.keys(r))));
-    const csvRows = [headers.join(',')];
-    for (const rec of flatRecords) {
-      const row = headers.map((h) => {
-        const val = rec[h];
-        if (val === null || val === undefined) return '';
-        const str = String(val).replace(/"/g, '""');
-        return `"${str}"`;
+    // Extract all unique keys from dataset records
+    const sampleData = records.map((r) => r.data as Record<string, any>);
+    const keys = Array.from(new Set(sampleData.flatMap((d) => (d && typeof d === 'object' ? Object.keys(d) : []))));
+    const header = ['id', 'source', ...keys].join(',');
+
+    const rows = records.map((r) => {
+      const d = (r.data as Record<string, any>) || {};
+      const vals = keys.map((k) => {
+        const val = d[k] !== undefined ? String(d[k]).replace(/"/g, '""') : '';
+        return `"${val}"`;
       });
-      csvRows.push(row.join(','));
-    }
-    return res.send(csvRows.join('\n'));
+      return [r.id, `"${r.source}"`, ...vals].join(',');
+    });
+
+    return res.send([header, ...rows].join('\n'));
   }
 
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename=dataset_${workflowId}.json`);
-  res.json(flatRecords);
+  res.json(records);
 });
 
 // Trigger deduplication pass on workflow dataset.
 datasetsRouter.post('/:workflowId/deduplicate', async (req, res) => {
   const { workflowId } = req.params;
-  const { matchField = 'name', similarityThreshold = 85 } = req.body;
+  const { matchField = 'job_title', similarityThreshold = 85 } = req.body;
+
+  const results = await db
+    .select()
+    .from(collectionResults)
+    .where(eq(collectionResults.taskId, workflowId));
+
+  const initialCount = results.length;
+  if (initialCount === 0) {
+    return res.json({
+      workflowId,
+      status: 'completed',
+      matchField,
+      similarityThreshold,
+      removedDuplicates: 0,
+      remainingRecords: 0,
+    });
+  }
+
+  // Convert to object records for deduplication
+  const recordsWithData = results.map((r) => ({
+    dbId: r.id,
+    ...( (r.data as Record<string, any>) || {} ),
+    [matchField]: (r.data as Record<string, any>)?.[matchField] || (r.data as Record<string, any>)?.title || (r.data as Record<string, any>)?.company_name || String(r.id),
+  }));
+
+  const deduplicated = deduplicateRecords(recordsWithData, matchField, Number(similarityThreshold));
+  const remainingIds = new Set(deduplicated.map((d) => d.dbId));
+
+  const toDeleteIds = results.filter((r) => !remainingIds.has(r.id)).map((r) => r.id);
+
+  for (const delId of toDeleteIds) {
+    await db.delete(collectionResults).where(eq(collectionResults.id, delId));
+  }
+
+  const remainingRecords = remainingIds.size;
+  const removedDuplicates = initialCount - remainingRecords;
+
+  // Update task result count
+  await db
+    .update(collectionTasks)
+    .set({ resultCount: remainingRecords, updatedAt: new Date() })
+    .where(eq(collectionTasks.id, workflowId));
 
   res.json({
     workflowId,
     status: 'completed',
     matchField,
     similarityThreshold,
-    removedDuplicates: 0,
-    remainingRecords: 0,
+    removedDuplicates,
+    remainingRecords,
   });
 });

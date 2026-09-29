@@ -15,7 +15,7 @@ export const apiClient = axios.create({
     withCredentials: true, // send cookies
 });
 
-import { DashboardStats, CollectionTask, WorkflowStep, Workflow, DatasetRecord, DatasetResponse, SourceItem } from '@/types';
+import { DashboardStats, CollectionTask, Workflow, DatasetResponse, SourceItem } from '@/types';
 
 export const api = {
     // dashboard 

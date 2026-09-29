@@ -1,9 +1,9 @@
-// Express router for AI prompt workflows and task management endpoints.
 import { Router } from 'express';
-import { desc, eq } from 'drizzle-orm';
+import { eq, desc, sql, and } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { collectionTasks } from '../../db/schema.js';
-import { collectionQueue } from '../../jobs/queue.js';
+import { collectionTasks, collectionResults } from '../../db/schema.js';
+import { processTaskExecution } from '../../services/taskProcessor.js';
+import { requireUserOrGuest } from '../../auth/middleware.js';
 
 export const workflowsRouter = Router();
 
@@ -51,64 +51,108 @@ function getExecutionSteps(status: string) {
 }
 
 // Create new data collection workflow from prompt.
-workflowsRouter.post('/', async (req, res) => {
+workflowsRouter.post('/', requireUserOrGuest, async (req, res) => {
   const { prompt } = req.body;
   if (!prompt || typeof prompt !== 'string') {
     return res.status(400).json({ error: 'Prompt string is required' });
   }
 
+  const identity = req.authIdentity;
+  const userId = identity?.type === 'user' ? identity.userId : undefined;
+  const guestId = identity?.type === 'guest' ? identity.guestId : undefined;
+
   const [task] = await db
     .insert(collectionTasks)
     .values({
       prompt,
+      userId: userId || null,
+      guestId: guestId || null,
       status: 'pending',
+      progress: 0,
+      executionSteps: [
+        { step: 'intent_parsing', status: 'running' },
+        { step: 'source_discovery', status: 'pending' },
+        { step: 'data_scraping', status: 'pending' },
+        { step: 'deduplication', status: 'pending' },
+      ],
     })
     .returning();
 
-  await collectionQueue.add('execute-workflow', { taskId: task.id, prompt: task.prompt });
+  // Execute workflow asynchronously
+  processTaskExecution(task.id, prompt).catch(console.error);
 
   res.status(201).json({
     id: task.id,
     prompt: task.prompt,
-    status: 'queued',
-    progress: 0,
+    status: task.status,
+    progress: task.progress,
     sourcesCount: 0,
     recordsCount: 0,
     createdAt: task.createdAt.toISOString(),
+    updatedAt: task.updatedAt.toISOString(),
   });
 });
 
 // List all collection workflows with status filter and pagination.
-workflowsRouter.get('/', async (req, res) => {
-  const { status, limit = 50, page = 1 } = req.query;
+workflowsRouter.get('/', requireUserOrGuest, async (req, res) => {
+  const { status, limit = 10, page = 1 } = req.query;
+  const numLimit = Number(limit);
+  const numPage = Number(page);
+  const offset = (numPage - 1) * numLimit;
 
-  const tasks = await db
+  const identity = req.authIdentity;
+  const conditions = [];
+
+  if (identity?.type === 'user' && identity.userId) {
+    conditions.push(eq(collectionTasks.userId, identity.userId));
+  } else if (identity?.type === 'guest' && identity.guestId) {
+    conditions.push(eq(collectionTasks.guestId, identity.guestId));
+  }
+
+  if (status && status !== 'all') {
+    conditions.push(eq(collectionTasks.status, String(status)));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const allTasks = await db
     .select()
     .from(collectionTasks)
-    .orderBy(desc(collectionTasks.createdAt));
+    .where(whereClause)
+    .orderBy(desc(collectionTasks.createdAt))
+    .limit(numLimit)
+    .offset(offset);
 
-  const mappedWorkflows = tasks.map((t) => ({
-    id: t.id,
-    prompt: t.prompt,
-    status: mapStatus(t.status),
-    progress: t.status === 'completed' ? 100 : t.status === 'running' ? 50 : 0,
-    sourcesCount: t.resultCount ? Math.min(t.resultCount, 5) : 0,
-    recordsCount: t.resultCount || 0,
-    createdAt: t.createdAt.toISOString(),
-  }));
+  // Map tasks with source counts
+  const workflows = await Promise.all(
+    allTasks.map(async (t) => {
+      const [sourcesRes] = await db
+        .select({ count: sql<number>`count(distinct ${collectionResults.sourceUrl})` })
+        .from(collectionResults)
+        .where(eq(collectionResults.taskId, t.id));
 
-  const filtered = status && status !== 'all'
-    ? mappedWorkflows.filter((w) => w.status === status)
-    : mappedWorkflows;
+      return {
+        id: t.id,
+        prompt: t.prompt,
+        status: t.status,
+        progress: t.progress ?? 100,
+        sourcesCount: Number(sourcesRes?.count || 0),
+        recordsCount: t.resultCount ?? 0,
+        planResponse: t.planResponse,
+        aiResponse: t.aiResponse,
+        executionSteps: t.executionSteps,
+        createdAt: t.createdAt.toISOString(),
+        updatedAt: t.updatedAt?.toISOString(),
+      };
+    })
+  );
+
+  const totalCountRes = await db.select({ count: sql<number>`count(*)` }).from(collectionTasks).where(whereClause);
+  const total = Number(totalCountRes[0]?.count || 0);
 
   res.json({
-    data: filtered,
-    meta: {
-      page: Number(page),
-      limit: Number(limit),
-      total: filtered.length,
-      statusFilter: status || 'all',
-    },
+    data: workflows,
+    meta: { page: numPage, limit: numLimit, total, statusFilter: status || 'all' },
   });
 });
 
@@ -116,71 +160,92 @@ workflowsRouter.get('/', async (req, res) => {
 workflowsRouter.get('/:id', async (req, res) => {
   const { id } = req.params;
 
-  const [task] = await db
-    .select()
-    .from(collectionTasks)
-    .where(eq(collectionTasks.id, id));
-
-  if (!task) {
-    return res.status(404).json({ error: 'Workflow not found' });
+  const [t] = await db.select().from(collectionTasks).where(eq(collectionTasks.id, id));
+  if (!t) {
+    return res.status(404).json({ error: `Workflow ${id} not found` });
   }
 
+  const [sourcesRes] = await db
+    .select({ count: sql<number>`count(distinct ${collectionResults.sourceUrl})` })
+    .from(collectionResults)
+    .where(eq(collectionResults.taskId, t.id));
+
   res.json({
-    id: task.id,
-    prompt: task.prompt,
-    status: mapStatus(task.status),
-    progress: task.status === 'completed' ? 100 : task.status === 'running' ? 50 : 0,
-    sourcesCount: task.resultCount ? Math.min(task.resultCount, 5) : 0,
-    recordsCount: task.resultCount || 0,
-    executionSteps: getExecutionSteps(task.status),
-    createdAt: task.createdAt.toISOString(),
+    id: t.id,
+    prompt: t.prompt,
+    status: t.status,
+    progress: t.progress ?? 100,
+    sourcesCount: Number(sourcesRes?.count || 0),
+    recordsCount: t.resultCount ?? 0,
+    planResponse: t.planResponse,
+    aiResponse: t.aiResponse,
+    executionSteps: t.executionSteps || [
+      { step: 'intent_parsing', status: 'completed' },
+      { step: 'source_discovery', status: 'completed' },
+      { step: 'data_scraping', status: 'completed' },
+      { step: 'deduplication', status: 'completed' },
+    ],
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt?.toISOString(),
   });
 });
 
 // Cancel active workflow execution.
 workflowsRouter.post('/:id/cancel', async (req, res) => {
   const { id } = req.params;
+
   await db
     .update(collectionTasks)
-    .set({ status: 'cancelled' })
+    .set({ status: 'cancelled', updatedAt: new Date() })
     .where(eq(collectionTasks.id, id));
 
   res.json({ id, status: 'cancelled', message: 'Workflow task cancelled' });
 });
 
-// Rerun previously executed workflow.
-workflowsRouter.post('/:id/rerun', async (req, res) => {
+// Rerun previously executed workflow (handles POST /:id and POST /:id/rerun).
+const rerunHandler = async (req: any, res: any) => {
   const { id } = req.params;
 
-  const [existing] = await db
-    .select()
-    .from(collectionTasks)
-    .where(eq(collectionTasks.id, id));
-
+  const [existing] = await db.select().from(collectionTasks).where(eq(collectionTasks.id, id));
   if (!existing) {
-    return res.status(404).json({ error: 'Workflow not found' });
+    return res.status(404).json({ error: `Workflow ${id} not found` });
   }
 
   const [newTask] = await db
     .insert(collectionTasks)
     .values({
       prompt: existing.prompt,
+      userId: existing.userId,
+      guestId: existing.guestId,
       status: 'pending',
+      progress: 0,
+      executionSteps: [
+        { step: 'intent_parsing', status: 'running' },
+        { step: 'source_discovery', status: 'pending' },
+        { step: 'data_scraping', status: 'pending' },
+        { step: 'deduplication', status: 'pending' },
+      ],
     })
     .returning();
 
-  await collectionQueue.add('execute-workflow', { taskId: newTask.id, prompt: newTask.prompt });
+  processTaskExecution(newTask.id, newTask.prompt).catch(console.error);
 
   res.status(201).json({
     newWorkflowId: newTask.id,
     originalWorkflowId: id,
     status: 'queued',
   });
-});
+};
+
+workflowsRouter.post('/:id/rerun', rerunHandler);
+workflowsRouter.post('/:id', rerunHandler);
 
 // Delete workflow history item.
 workflowsRouter.delete('/:id', async (req, res) => {
   const { id } = req.params;
+
+  await db.delete(collectionResults).where(eq(collectionResults.taskId, id));
   await db.delete(collectionTasks).where(eq(collectionTasks.id, id));
+
   res.json({ message: `Workflow ${id} deleted successfully` });
 });

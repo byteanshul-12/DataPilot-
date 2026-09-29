@@ -27,6 +27,8 @@ export interface Workflow {
   progress?: number;
   sourcesCount?: number;
   recordsCount?: number;
+  aiResponse?: string;
+  planResponse?: string;
   executionSteps?: WorkflowStep[];
   createdAt: string;
   updatedAt?: string;

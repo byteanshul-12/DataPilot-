@@ -43,7 +43,6 @@ export function ProviderButton({
 }: ProviderButtonProps) {
   const {
     authClient,
-    baseURL,
     localization,
     navigate,
     redirectTo,
@@ -61,7 +60,7 @@ export function ProviderButton({
     })
 
   const providerId = getProviderId(provider)
-  const providerIcon = renderProviderIcon(provider)
+  const providerIcon = renderProviderIcon(provider) as React.ReactNode
 
   const signInMutating = useIsMutating({
     mutationKey: authMutationKeys.signIn.all

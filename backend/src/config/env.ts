@@ -15,10 +15,6 @@ const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   GUEST_COOKIE_NAME: z.string().default('datapilot_guest_id'),
   GUEST_SESSION_TTL_DAYS: z.coerce.number().default(7),
-  GOOGLE_CLIENT_ID: z.string().optional().default(''),
-  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
-  GITHUB_CLIENT_ID: z.string().optional().default(''),
-  GITHUB_CLIENT_SECRET: z.string().optional().default(''),
   AI_SERVICE_URL: z.string().default('http://localhost:8001'),
 });
 

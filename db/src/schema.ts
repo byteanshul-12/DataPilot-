@@ -74,9 +74,14 @@ export const collectionTasks = pgTable('collection_tasks', {
   prompt: text('prompt').notNull(),
   status: text('status').notNull().default('pending'),
   resultCount: integer('result_count').default(0),
+  planResponse: text('plan_response'),
+  aiResponse: text('ai_response'),
+  executionSteps: jsonb('execution_steps'),
+  progress: integer('progress').default(0),
   userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
   guestId: text('guest_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Extracted collection data results
@@ -84,6 +89,7 @@ export const collectionResults = pgTable('collection_results', {
   id: uuid('id').defaultRandom().primaryKey(),
   taskId: uuid('task_id').references(() => collectionTasks.id, { onDelete: 'cascade' }),
   sourceUrl: text('source_url'),
+  domain: text('domain'),
   data: jsonb('data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
