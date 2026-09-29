@@ -6,6 +6,7 @@ import { auth } from './auth/better-auth.js';
 import { env } from './config/env.js';
 import { v1Router } from './api/v1/index.js';
 import { parseCookies } from './auth/cookie.js';
+import { initDatabase } from './db/migrate.js';
 
 const app = express();
 
@@ -43,6 +44,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/v1', v1Router);
+
+await initDatabase();
 
 app.listen(Number(env.PORT), () => {
   console.log(`Backend server running on port ${env.PORT}`);
