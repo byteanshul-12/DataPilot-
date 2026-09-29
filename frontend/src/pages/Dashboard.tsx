@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { api } from "@/lib/api";
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   Layers,
   Activity,
@@ -18,6 +19,10 @@ import {
   ArrowRight,
   Loader2,
   Play,
+  Paperclip,
+  FileText,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -27,25 +32,176 @@ export default function Dashboard() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // File Upload State
+  const [attachedFile, setAttachedFile] = useState<{
+    file: File;
+    previewUrl?: string;
+    content?: string;
+    name: string;
+    size: string;
+    type: string;
+    isImage: boolean;
+    isPdf: boolean;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const isMac =
+    typeof window !== "undefined" &&
+    /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent || navigator.platform || "");
+
   useEffect(() => {
     api.getDashboardStats().then(setStats).catch(console.error);
   }, []);
 
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
-    if (!prompt.trim()) return;
+  const handleFileProcess = async (file: File) => {
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const isTextual =
+      file.type.startsWith("text/") ||
+      file.name.endsWith(".csv") ||
+      file.name.endsWith(".json") ||
+      file.name.endsWith(".txt") ||
+      file.name.endsWith(".md");
+
+    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    let content: string | undefined = undefined;
+
+    if (isTextual && file.size < 5 * 1024 * 1024) {
+      try {
+        content = await file.text();
+      } catch (e) {
+        console.warn("Failed to read file text content", e);
+      }
+    }
+
+    setAttachedFile({
+      file,
+      previewUrl,
+      content,
+      name: file.name,
+      size: formatFileSize(file.size),
+      type: file.type || "application/octet-stream",
+      isImage,
+      isPdf,
+    });
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileProcess(file);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    if (attachedFile?.previewUrl) {
+      URL.revokeObjectURL(attachedFile.previewUrl);
+    }
+    setAttachedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileProcess(file);
+    }
+  };
+
+  const handleCreateTask = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const fileMeta = attachedFile
+      ? `[Attached File: ${attachedFile.name} (${attachedFile.isPdf ? "PDF Document" : attachedFile.isImage ? "Image/Photo" : "File"}, Size: ${attachedFile.size})]${
+          attachedFile.content
+            ? `\n\nFile Content Preview:\n\`\`\`\n${attachedFile.content.slice(0, 30000)}\n\`\`\``
+            : ""
+        }`
+      : "";
+
+    const finalPrompt = prompt.trim()
+      ? (fileMeta ? `${fileMeta}\n\n${prompt.trim()}` : prompt.trim())
+      : (attachedFile ? `Analyze attached ${attachedFile.isPdf ? "PDF document" : attachedFile.isImage ? "photo" : "file"} (${attachedFile.name}) and extract all key data.` : "");
+
+    if (!finalPrompt || loading) return;
 
     setLoading(true);
 
     try {
-      await api.createTask(prompt);
+      await api.createTask(finalPrompt);
+      if (attachedFile?.previewUrl) {
+        URL.revokeObjectURL(attachedFile.previewUrl);
+      }
       navigate("/workflows");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create task", err);
+      toast.error(err?.response?.data?.message || err?.message || "Failed to create workflow task");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // 1. Ignore if in IME composition or macOS inline predictive text
+    if (e.nativeEvent.isComposing || e.keyCode === 229) {
+      return;
+    }
+
+    // 2. Identify the Enter/Return key across all OS and browsers
+    const isEnterKey =
+      e.key === "Enter" ||
+      e.key === "Return" ||
+      e.code === "Enter" ||
+      e.code === "NumpadEnter" ||
+      e.keyCode === 13 ||
+      e.which === 13;
+
+    if (!isEnterKey) return;
+
+    // 3. Modifier handling:
+    // - Shift + Enter: allow newline in textarea
+    // - Cmd + Enter (Mac: e.metaKey): force submit
+    // - Ctrl + Enter (PC/Mac: e.ctrlKey): force submit
+    // - Plain Enter (without Shift): submit
+    const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+    if (e.shiftKey && !isCmdOrCtrl) {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!prompt.trim() && !attachedFile) {
+      toast.info("Please enter a prompt or attach a file first.");
+      return;
+    }
+
+    if (loading) return;
+
+    handleCreateTask();
   };
 
 
@@ -88,25 +244,124 @@ export default function Dashboard() {
                   
                 </div>
 
-                <form onSubmit={handleCreateTask}>
+                <form ref={formRef} onSubmit={handleCreateTask} onKeyDown={handleKeyDown}>
 
-                  <div className="overflow-hidden rounded-lg border border-zinc-800 bg-black transition-colors focus-within:border-zinc-600">
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative overflow-hidden rounded-xl border bg-black transition-all ${
+                      isDragging
+                        ? "border-emerald-500 bg-emerald-950/20 shadow-lg shadow-emerald-950/20 ring-1 ring-emerald-500"
+                        : "border-zinc-800 focus-within:border-zinc-600"
+                    }`}
+                  >
+
+                    {/* Attached File Preview Chip */}
+                    {attachedFile && (
+                      <div className="mx-3 mt-3 flex items-center justify-between rounded-lg border border-zinc-800/90 bg-zinc-900/90 p-2.5 backdrop-blur-sm">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          {attachedFile.isImage && attachedFile.previewUrl ? (
+                            <img
+                              src={attachedFile.previewUrl}
+                              alt="Upload preview"
+                              className="h-10 w-10 shrink-0 rounded-md border border-zinc-700 object-cover"
+                            />
+                          ) : attachedFile.isImage ? (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-sky-800/60 bg-sky-950/80 text-sky-400">
+                              <ImageIcon className="h-5 w-5" />
+                            </div>
+                          ) : attachedFile.isPdf ? (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-red-800/60 bg-red-950/80 text-red-400">
+                              <span className="font-mono text-[11px] font-bold">PDF</span>
+                            </div>
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-zinc-700 bg-zinc-800 text-zinc-300">
+                              <FileText className="h-5 w-5" />
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <p className="truncate text-xs font-medium text-zinc-100" title={attachedFile.name}>
+                              {attachedFile.name}
+                            </p>
+                            <p className="text-[10px] text-zinc-500">
+                              {attachedFile.isPdf ? "PDF Document" : attachedFile.isImage ? "Photo / Image" : "Document"} • {attachedFile.size}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleRemoveFile}
+                          className="rounded-full p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+                          title="Remove file"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
 
                     <Textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="e.g. Find the top 20 SaaS companies in India and collect their pricing, website, and funding information..."
-                      className="min-h-[100px] resize-none border-0 bg-transparent px-4 py-4 text-sm text-zinc-100 placeholder:text-zinc-700 focus-visible:ring-0"
+                      onKeyDown={handleKeyDown}
+                      placeholder={
+                        attachedFile
+                          ? `Ask anything about ${attachedFile.name} (e.g. extract contacts, parse tables) or hit Enter to run...`
+                          : "e.g. Find the top 20 SaaS companies in India and collect their pricing, website, and funding information..."
+                      }
+                      className="min-h-[100px] resize-none border-0 bg-transparent px-4 py-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-0"
                     />
 
-                    <div className="flex items-center justify-between border-t border-zinc-800 px-3 py-3">
+                    {isDragging && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-xs">
+                        <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
+                          <Paperclip className="h-4 w-4 animate-bounce" />
+                          <span>Drop your PDF, Photo, or file here</span>
+                        </div>
+                      </div>
+                    )}
 
-                     
+                    <div className="flex items-center justify-between border-t border-zinc-800/80 px-3 py-2.5">
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          accept=".pdf,image/*,.png,.jpg,.jpeg,.webp,.csv,.xlsx,.txt"
+                          className="hidden"
+                        />
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="h-8 gap-1.5 rounded-md px-2.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors"
+                          title="Attach PDF, Photo, or File"
+                        >
+                          <Paperclip className="h-3.5 w-3.5" />
+                          <span className="text-xs">Attach file</span>
+                        </Button>
+
+                        <span className="text-[11px] text-zinc-500 hidden sm:inline-flex items-center gap-1">
+                          Press <kbd className="rounded border border-zinc-800 bg-zinc-900 px-1 py-0.5 font-mono text-[10px] text-zinc-300">{isMac ? "Return ↵" : "Enter ↵"}</kbd>
+                          {isMac && (
+                            <>
+                              {" or "}
+                              <kbd className="rounded border border-zinc-800 bg-zinc-900 px-1 py-0.5 font-mono text-[10px] text-zinc-300">⌘ Return</kbd>
+                            </>
+                          )}
+                          {" to run"}
+                        </span>
+                      </div>
 
                       <Button
                         type="submit"
-                        disabled={loading || !prompt.trim()}
-                        className="ml-auto h-9 rounded-md bg-white px-4 text-xs font-medium text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500"
+                        disabled={loading || (!prompt.trim() && !attachedFile)}
+                        className="ml-auto h-9 rounded-md bg-white px-4 text-xs font-medium text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 transition-colors"
                       >
                         {loading ? (
                           <>

@@ -8,6 +8,7 @@ from ai.llm_client import (
     extract_structured_dataset,
 )
 from ai.maxun_client import search_web_sources, scrape_with_maxun_api
+from ai.mailer import EmailOutreachTool
 
 logger = logging.getLogger("datapilot.workflow")
 logger.setLevel(logging.INFO)
@@ -108,6 +109,39 @@ async def run_data_collection_workflow(task_id: str, prompt: str) -> dict:
 
     execution_steps[2]["status"] = "completed"
     execution_steps.append({"step": "deduplication", "status": "completed"})
+
+    # Check if email outreach was requested
+    is_outreach_prompt = any(k in prompt.lower() for k in ["email", "outreach", "cold mail", "send mail", "mailer", "contact", "reach out"])
+    if is_outreach_prompt and records:
+        mailer = EmailOutreachTool()
+        execution_steps.append({"step": "email_outreach", "status": "running"})
+        outreach_dispatched = 0
+        
+        for rec in records:
+            data = rec.get("data", {})
+            company = data.get("organization") or data.get("company") or entity_kw
+            role = data.get("name") or data.get("title") or "Business Inquiry"
+            domain = urlparse(rec.get("source", "")).netloc or "example.com"
+            clean_domain = domain.replace("www.", "")
+            contact_email = data.get("email") or f"contact@{clean_domain}"
+            data["contact_email"] = contact_email
+            
+            draft = mailer.draft_email(company_name=company, role_or_topic=role)
+            data["email_subject"] = draft["subject"]
+            data["email_body"] = draft["body"]
+            
+            # Dispatch email (live if SMTP configured, simulation otherwise)
+            dispatch_res = mailer.dispatch_email(
+                recipient_email=contact_email,
+                subject=draft["subject"],
+                body=draft["body"],
+                simulate=not mailer.is_smtp_configured()
+            )
+            data["email_status"] = dispatch_res.get("status", "simulated_sent")
+            outreach_dispatched += 1
+
+        execution_steps[-1]["status"] = "completed"
+        ai_summary += f"\n\n### ✉️ Email Outreach Pipeline\n- Personalized outreach drafted for **{outreach_dispatched} target organizations**.\n- Mode: **{'Live SMTP (Resend)' if mailer.is_smtp_configured() else 'Simulated Dispatch'}**.\n- Detailed email subjects and bodies attached to records in the dataset table."
 
     return {
         "taskId": task_id,

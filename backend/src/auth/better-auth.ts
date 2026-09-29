@@ -6,6 +6,7 @@ import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { env } from '../config/env.js';
 import { UserIdentity } from './types.js';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../services/emailService.js';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -20,6 +21,14 @@ export const auth = betterAuth({
   ].filter(Boolean),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordResetEmail({ to: user.email, url });
+    },
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail({ to: user.email, url });
+    },
   },
   socialProviders: {
     google: {

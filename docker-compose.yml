@@ -29,15 +29,19 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/datapilot
       - REDIS_URL=redis://redis:6379/0
+      - AI_SERVICE_URL=http://ai:8001
     depends_on:
       - postgres
       - redis
+      - ai
 
   ai:
     build:
       context: ./ai
       dockerfile: Dockerfile
     container_name: datapilot_ai
+    ports:
+      - "8001:8001"
     environment:
       - REDIS_URL=redis://redis:6379/0
     depends_on:

@@ -4,6 +4,7 @@ import { eq, desc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { collectionResults, collectionTasks } from '../../db/schema.js';
 import { deduplicateRecords } from '../../services/deduplication.js';
+import * as XLSX from 'xlsx';
 
 
 export const datasetsRouter = Router();
@@ -59,6 +60,35 @@ datasetsRouter.get('/:workflowId/export', async (req, res) => {
     data: r.data,
     createdAt: r.createdAt.toISOString(),
   }));
+
+  if (format === 'xlsx') {
+    const flattenedRows = records.map((r) => {
+      const d = (r.data as Record<string, any>) || {};
+      const flatObj: Record<string, any> = {
+        'Record ID': r.id,
+        'Source URL': r.source,
+      };
+      for (const [k, v] of Object.entries(d)) {
+        const colName = k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        flatObj[colName] = typeof v === 'object' && v !== null ? JSON.stringify(v) : v;
+      }
+      return flatObj;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      flattenedRows.length > 0 ? flattenedRows : [{ Message: 'No data records found' }]
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'DataPilot Export');
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=dataset_${workflowId}.xlsx`);
+    return res.send(buffer);
+  }
 
   if (format === 'csv') {
     res.setHeader('Content-Type', 'text/csv');
