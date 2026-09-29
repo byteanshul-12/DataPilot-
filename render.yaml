@@ -65,10 +65,7 @@ services:
       - key: BETTER_AUTH_SECRET
         generateValue: true
       - key: BETTER_AUTH_URL
-        fromService:
-          type: web
-          name: datapilot-backend
-          property: hostport
+        value: https://datapilot-backend-zywi.onrender.com
       - key: FRONTEND_URL
         value: https://datapilot-frontend-e6gi.onrender.com
       - key: BACKEND_CORS_ORIGINS

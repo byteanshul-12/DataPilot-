@@ -14,18 +14,7 @@ export const auth = betterAuth({
     schema,
   }),
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: (() => {
-    const raw = env.BETTER_AUTH_URL;
-    // Already has protocol
-    if (raw.startsWith('http')) return raw;
-    // Render's hostport format (e.g. "datapilot-backend-zywi.onrender.com:443")
-    if (raw.includes('.onrender.com')) {
-      const host = raw.split(':')[0];
-      return `https://${host}`;
-    }
-    // Fallback
-    return raw || 'http://localhost:8000';
-  })(),
+  baseURL: env.BETTER_AUTH_URL.startsWith('http') ? env.BETTER_AUTH_URL : `https://${env.BETTER_AUTH_URL}`,
   trustedOrigins: [
     'http://localhost:5173',
     'http://localhost:3000',
