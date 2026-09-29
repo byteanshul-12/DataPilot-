@@ -1,10 +1,23 @@
 import axios from 'axios';
 
+function resolveApiBase(): string {
+  const raw = import.meta.env.VITE_API_URL;
 
-const rawApiUrl = import.meta.env.VITE_API_URL;
-const API_BASE = rawApiUrl
-  ? `${rawApiUrl.startsWith("http") ? rawApiUrl : `https://${rawApiUrl}`}/api/v1`
-  : "http://localhost:8000/api/v1";
+  // If VITE_API_URL is set and has a protocol, use it directly
+  if (raw && raw.startsWith("http")) return `${raw}/api/v1`;
+
+  // If VITE_API_URL is a bare hostname (e.g. from Render's fromService), prepend https
+  if (raw && raw.includes(".")) return `https://${raw}/api/v1`;
+
+  // Fallback: detect Render production by the running hostname
+  if (typeof window !== "undefined" && window.location.hostname.includes("onrender.com")) {
+    return "https://datapilot-backend-zywi.onrender.com/api/v1";
+  }
+
+  return "http://localhost:8000/api/v1";
+}
+
+const API_BASE = resolveApiBase();
 
 
 // axios instance 

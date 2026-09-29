@@ -65,6 +65,21 @@ services:
       - key: BETTER_AUTH_SECRET
         generateValue: true
       - key: BETTER_AUTH_URL
+        fromService:
+          type: web
+          name: datapilot-backend
+          property: hostport
+      - key: FRONTEND_URL
+        value: https://datapilot-frontend-e6gi.onrender.com
+      - key: BACKEND_CORS_ORIGINS
+        value: https://datapilot-frontend-e6gi.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
         sync: false
       - key: RESEND_API_KEY
         sync: false
@@ -84,7 +99,5 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: datapilot-backend
-          property: host
+        value: https://datapilot-backend-zywi.onrender.com
+

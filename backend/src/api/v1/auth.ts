@@ -14,6 +14,8 @@ authRouter.post('/guest', async (req: Request, res: Response) => {
     if (existing) {
       return res.json({
         success: true,
+        authenticated: true,
+        type: 'guest',
         isNew: false,
         guestId: existing.guestId,
         expiresAt: existing.expiresAt,
@@ -23,6 +25,8 @@ authRouter.post('/guest', async (req: Request, res: Response) => {
     const session = await createGuestSession(res);
     return res.status(201).json({
       success: true,
+      authenticated: true,
+      type: 'guest',
       isNew: true,
       guestId: session.guestId,
       expiresAt: session.expiresAt,
