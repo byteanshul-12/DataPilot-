@@ -33,6 +33,10 @@ export default function Workflows() {
 
   useEffect(() => {
     fetchWorkflows();
+    const interval = setInterval(() => {
+      api.getWorkflows(statusFilter).then((res) => setWorkflows(res.data)).catch(console.error);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [statusFilter]);
 
   const handleCancel = async (id: string) => {

@@ -13,6 +13,7 @@ const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   GUEST_COOKIE_NAME: z.string().default('datapilot_guest_id'),
   GUEST_SESSION_TTL_DAYS: z.coerce.number().default(7),
+  AI_SERVICE_URL: z.string().default('http://localhost:8001'),
 });
 
 export const env = envSchema.parse(process.env);

@@ -1,48 +1,64 @@
-"""Main entrypoint script to run DataPilot AI Service or test LangGraph workflow directly."""
-import asyncio
-import os
-import uvicorn
-from dotenv import load_dotenv
+import logging
+import time
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from ai.config import PORT, LOG_LEVEL
+from ai.workflow_engine import run_data_collection_workflow
+from ai.llm_client import classify_intent, generate_plan_response
 
-from app.graph.workflow import build_collection_graph
-from app.main import app
+logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
+logger = logging.getLogger("datapilot.ai")
 
-load_dotenv()
+app = FastAPI(
+    title="DataPilot AI Microservice",
+    version="1.0.0",
+    description="AI-Powered Data Intelligence & Dynamic Web Extraction Workflow Engine"
+)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def run_server():
-    port = int(os.getenv("PORT", "8000"))
-    print(f"Starting DataPilot AI FastAPI Service on port {port}...")
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+class ExecuteRequest(BaseModel):
+    taskId: str
+    prompt: str
 
+class ClassifyRequest(BaseModel):
+    prompt: str
 
-async def test_workflow():
-    print("Testing LangGraph DataPilot Workflow initialization...")
-    graph = build_collection_graph()
-    initial_state = {
-        "task_id": "test-123",
-        "user_requirement": "Find 5 Indian SaaS startups with company name and website",
-        "specification": {},
-        "search_queries": [],
-        "discovered_sources": [],
-        "raw_documents": [],
-        "extracted_records": [],
-        "validated_records": [],
-        "deduplicated_records": [],
-        "errors": [],
-        "target_count": 5,
-        "iteration": 1,
-        "status": "init"
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "datapilot-ai",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
-    result = await graph.ainvoke(initial_state)
-    print("Workflow executed successfully!")
-    print(f"Status: {result.get('status')}")
-    print(f"Records extracted: {len(result.get('deduplicated_records', []))}")
 
+@app.post("/api/v1/execute")
+async def execute_workflow(req: ExecuteRequest):
+    if not req.prompt:
+        raise HTTPException(status_code=400, detail="Prompt string is required")
+    
+    logger.info(f"Received execution request for taskId={req.taskId}")
+    result = await run_data_collection_workflow(req.taskId, req.prompt)
+    return result
+
+@app.post("/api/v1/classify")
+async def classify_prompt(req: ClassifyRequest):
+    result = await classify_intent(req.prompt)
+    return result
+
+@app.post("/api/v1/plan")
+async def create_plan(req: ClassifyRequest):
+    intent_details = await classify_intent(req.prompt)
+    plan_text = await generate_plan_response(req.prompt, intent_details)
+    return {"prompt": req.prompt, "plan": plan_text}
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "test":
-        asyncio.run(test_workflow())
-    else:
-        run_server()
+    import uvicorn
+    uvicorn.run("ai.main:app", host="0.0.0.0", port=PORT, reload=True)
