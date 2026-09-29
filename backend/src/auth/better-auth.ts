@@ -15,10 +15,17 @@ export const auth = betterAuth({
   }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: [
-    'http://localhost:5173',
-    process.env.BACKEND_CORS_ORIGINS || '',
-  ].filter(Boolean),
+  trustedOrigins: (request) => {
+    const origin = request?.headers?.get('origin');
+    const configured = process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map((s) => s.trim()) : [];
+    return [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+      ...configured,
+      origin,
+    ].filter(Boolean) as string[];
+  },
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {

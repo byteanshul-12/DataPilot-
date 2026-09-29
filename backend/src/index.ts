@@ -11,7 +11,18 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.BACKEND_CORS_ORIGINS || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const configured = process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map(s => s.trim()) : [];
+      if (
+        origin.includes('localhost') ||
+        origin.endsWith('.onrender.com') ||
+        configured.includes(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
