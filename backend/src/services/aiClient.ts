@@ -23,17 +23,36 @@ export interface AIExecutionResult {
 }
 
 export async function executeAIWorkflow(taskId: string, prompt: string): Promise<AIExecutionResult> {
-  let baseUrl = env.AI_SERVICE_URL || 'http://localhost:8001';
+  let baseUrl = (env.AI_SERVICE_URL || 'http://localhost:8001').trim();
+
+  // If no protocol is specified:
   if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-    baseUrl = `https://${baseUrl}`;
+    if (baseUrl.includes('.onrender.com')) {
+      baseUrl = `https://${baseUrl}`;
+    } else {
+      // Internal Render private network or localhost
+      baseUrl = `http://${baseUrl}`;
+    }
   }
+
+  // If internal service name without port (e.g., http://datapilot-ai), attach port 8001
+  try {
+    const parsed = new URL(baseUrl);
+    if (!parsed.port && !parsed.hostname.includes('.')) {
+      parsed.port = '8001';
+      baseUrl = parsed.toString().replace(/\/$/, '');
+    }
+  } catch (e) {}
+
   const url = `${baseUrl.replace(/\/$/, '')}/api/v1/execute`;
+  console.log(`[AIClient] Calling AI engine for taskId=${taskId} at: ${url}`);
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ taskId, prompt }),
+      signal: AbortSignal.timeout(120000), // 2 min timeout for cold starts
     });
 
     if (!response.ok) {
