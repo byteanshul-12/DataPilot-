@@ -1,5 +1,6 @@
 // REST API service methods for backend communication.
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
 
 export async function fetchTasks() {
   const response = await fetch(`${API_URL}/api/v1/tasks`);
