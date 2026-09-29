@@ -15,17 +15,16 @@ export const auth = betterAuth({
   }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: (request) => {
-    const origin = request?.headers?.get('origin');
-    const configured = process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map((s) => s.trim()) : [];
-    return [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      process.env.FRONTEND_URL,
-      ...configured,
-      origin,
-    ].filter(Boolean) as string[];
-  },
+  trustedOrigins: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:*',
+    'https://*.onrender.com',
+    '*.onrender.com',
+    'https://datapilot-frontend-e6gi.onrender.com',
+    process.env.FRONTEND_URL || '',
+    ...(process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map((s) => s.trim()) : []),
+  ].filter(Boolean),
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {

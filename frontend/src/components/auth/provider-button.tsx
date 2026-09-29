@@ -83,7 +83,17 @@ export function ProviderButton({
       return
     }
 
-    signInSocial({ provider: providerId, callbackURL, fetchOptions })
+    signInSocial(
+      { provider: providerId, callbackURL, fetchOptions },
+      {
+        onSuccess: (res: any) => {
+          const redirectUrl = res?.data?.url || res?.url;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+          }
+        },
+      }
+    )
   }
 
   return (
