@@ -1,0 +1,2459 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DATAPILOT // Web Intelligence</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#171717',
+                        surface: '#0F0F0F'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    animation: {
+                        'spin-slow': 'spin 15s linear infinite',
+                        'reverse-spin': 'spin 20s linear infinite reverse',
+                        'marquee': 'marquee 30s linear infinite',
+                        'blink': 'blink 2s ease-in-out infinite',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4,0,0.6,1) infinite'
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' }
+                        },
+                        blink: {
+                            '0%,100%': { opacity: 1 },
+                            '50%': { opacity: .25 }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+/* =========================================================
+   DATAPILOT — OPTIMUS COLOR SYSTEM
+   Clean static background + GSAP motion
+   ========================================================= */
+
+html {
+    background-color: #f5f4ef;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    color: #171717;
+    overflow-x: hidden;
+    cursor: auto;
+}
+
+/* ---------------------------------------------------------
+   GLOBAL BACKGROUND
+   --------------------------------------------------------- */
+
+
+/* ---------------------------------------------------------
+   GLASS / CARDS
+   --------------------------------------------------------- */
+
+.glass-panel {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border: 1px solid rgba(20,20,20,0.09);
+
+    position: relative;
+    overflow: hidden;
+
+    box-shadow:
+        0 1px 2px rgba(0,0,0,0.02),
+        0 10px 40px rgba(0,0,0,0.025);
+}
+
+/* ---------------------------------------------------------
+   SPOTLIGHT
+   --------------------------------------------------------- */
+
+.spotlight-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    border-radius: inherit;
+
+    background:
+        radial-gradient(
+            600px circle at var(--mouse-x) var(--mouse-y),
+            rgba(120,100,255,0.07),
+            transparent 35%
+        );
+
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+}
+
+.spotlight-card:hover::before {
+    opacity: 1;
+}
+
+.spotlight-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    border-radius: inherit;
+    padding: 1px;
+
+    background:
+        radial-gradient(
+            500px circle at var(--mouse-x) var(--mouse-y),
+            rgba(120,100,255,0.28),
+            transparent 30%
+        );
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+}
+
+.spotlight-card:hover::after {
+    opacity: 1;
+}
+
+/* ---------------------------------------------------------
+   MARQUEE
+   --------------------------------------------------------- */
+
+.marquee-mask {
+    mask-image:
+        linear-gradient(
+            to right,
+            transparent,
+            black 10%,
+            black 90%,
+            transparent
+        );
+
+    -webkit-mask-image:
+        linear-gradient(
+            to right,
+            transparent,
+            black 10%,
+            black 90%,
+            transparent
+        );
+}
+
+/* ---------------------------------------------------------
+   NOISE
+   --------------------------------------------------------- */
+
+.noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    pointer-events: none;
+    opacity: 0.025;
+
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------
+   BUTTONS
+   --------------------------------------------------------- */
+
+.btn-magnetic {
+    display: inline-block;
+}
+
+.skew-target {
+    will-change: transform;
+}
+
+/* Primary button */
+
+.bg-accent {
+    background-color: #171717 !important;
+}
+
+.text-accent {
+    color: #171717 !important;
+}
+
+.border-accent {
+    border-color: #171717 !important;
+}
+
+/* ---------------------------------------------------------
+   INPUTS
+   --------------------------------------------------------- */
+
+.custom-input {
+    background: rgba(255,255,255,0.7);
+
+    border: 1px solid rgba(20,20,20,0.12);
+
+    color: #171717;
+
+    transition:
+        border-color 0.3s ease,
+        background 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.custom-input:focus {
+    border-color: rgba(20,20,20,0.35);
+
+    background: rgba(255,255,255,0.95);
+
+    box-shadow:
+        0 0 0 3px rgba(120,100,255,0.08);
+
+    outline: none;
+}
+
+/* ---------------------------------------------------------
+   RANGE
+   --------------------------------------------------------- */
+
+input[type=range] {
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+
+    height: 16px;
+    width: 16px;
+
+    border-radius: 50%;
+
+    background: #171717;
+
+    cursor: pointer;
+
+    margin-top: -6px;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+
+    background: rgba(20,20,20,0.12);
+
+    border-radius: 2px;
+}
+
+/* ---------------------------------------------------------
+   LIGHT THE DARK TAILWIND COLORS
+   --------------------------------------------------------- */
+
+/* Main dark backgrounds */
+
+.bg-\[\#050505\],
+.bg-\[\#080808\],
+.bg-\[\#020202\] {
+    background-color: transparent !important;
+}
+
+/* Slight section contrast */
+
+section.bg-\[\#080808\] {
+    background:
+        rgba(235,234,229,0.42) !important;
+}
+
+/* Footer */
+
+footer.bg-\[\#020202\] {
+    background:
+        rgba(232,231,226,0.72) !important;
+}
+
+/* ---------------------------------------------------------
+   TEXT
+   --------------------------------------------------------- */
+
+.text-white {
+    color: #171717 !important;
+}
+
+.text-gray-300 {
+    color: #343434 !important;
+}
+
+.text-gray-400 {
+    color: #5d5d5d !important;
+}
+
+.text-gray-500 {
+    color: #777777 !important;
+}
+
+.text-gray-600 {
+    color: #92908a !important;
+}
+
+.text-gray-700 {
+    color: #77756f !important;
+}
+
+/* ---------------------------------------------------------
+   BORDERS
+   --------------------------------------------------------- */
+
+.border-white\/5 {
+    border-color: rgba(20,20,20,0.055) !important;
+}
+
+.border-white\/10 {
+    border-color: rgba(20,20,20,0.09) !important;
+}
+
+.border-white\/15 {
+    border-color: rgba(20,20,20,0.13) !important;
+}
+
+.border-white\/20 {
+    border-color: rgba(20,20,20,0.18) !important;
+}
+
+/* ---------------------------------------------------------
+   WHITE TRANSPARENCY UTILITIES
+   --------------------------------------------------------- */
+
+.bg-white\/5 {
+    background-color: rgba(20,20,20,0.035) !important;
+}
+
+.bg-white\/10 {
+    background-color: rgba(20,20,20,0.055) !important;
+}
+
+.bg-white\/20 {
+    background-color: rgba(20,20,20,0.08) !important;
+}
+
+/* ---------------------------------------------------------
+   NAV
+   --------------------------------------------------------- */
+
+nav {
+    background:
+        rgba(245,244,239,0.76) !important;
+
+    border-bottom:
+        1px solid rgba(20,20,20,0.08) !important;
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* ---------------------------------------------------------
+   BUTTON HOVER
+   --------------------------------------------------------- */
+
+.hover\:bg-white:hover {
+    background-color: #171717 !important;
+}
+
+.hover\:text-black:hover {
+    color: #ffffff !important;
+}
+
+/* ---------------------------------------------------------
+   ACCENT / STATUS COLORS
+   --------------------------------------------------------- */
+
+.text-green-500 {
+    color: #4f765d !important;
+}
+
+.bg-green-500 {
+    background-color: #4f765d !important;
+}
+
+.bg-red-500\/50 {
+    background-color: rgba(180,70,70,0.5) !important;
+}
+
+.bg-yellow-500\/50 {
+    background-color: rgba(170,140,60,0.5) !important;
+}
+
+/* ---------------------------------------------------------
+   SELECTION
+   --------------------------------------------------------- */
+
+::selection {
+    background: #171717;
+    color: #ffffff;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+    .hero-glow-blob {
+        width: 420px;
+        height: 420px;
+    }
+
+}
+
+        /* =========================================================
+           HERO — CLEAN, STATIC, OPTIMUS-INSPIRED
+           ========================================================= */
+
+        .hero-section {
+            background:
+                radial-gradient(circle at 50% 22%, rgba(255,255,255,.98), rgba(245,244,239,.72) 42%, rgba(245,244,239,0) 72%);
+        }
+
+        .hero-title {
+            text-wrap: balance;
+        }
+
+        .hero-title .text-gray-600 {
+            color: #a09e98 !important;
+        }
+
+        .hero-terminal {
+            transform-origin: center top;
+        }
+
+        .terminal-grid {
+            box-shadow:
+                0 20px 70px rgba(0,0,0,.07),
+                0 2px 8px rgba(0,0,0,.035);
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                min-height: auto;
+                padding-top: 8rem;
+            }
+
+            .hero-title {
+                font-size: clamp(4.25rem, 17vw, 7rem);
+                line-height: .84;
+            }
+
+            .hero-terminal {
+                margin-top: 1rem;
+            }
+        }
+
+</style>
+</head>
+
+<body class="antialiased selection:bg-accent selection:text-white font-sans">
+
+    <!-- ========================================================= -->
+    <!-- GLOBAL BACKDROP -->
+    <!-- ========================================================= -->
+
+    <!-- ========================================================= -->
+    <!-- NAVIGATION -->
+    <!-- ========================================================= -->
+
+    <nav
+        class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#050505]/75 backdrop-blur-xl"
+    >
+
+        <div class="max-w-[1400px] mx-auto px-6 h-[76px] flex items-center justify-between">
+
+            <a href="#" class="group">
+
+                <span
+                    class="font-display font-semibold text-xl tracking-[-0.08em] text-white"
+                >
+                    DATAPILOT<span class="text-accent">.</span>
+                </span>
+
+            </a>
+
+
+            <div
+                class="hidden lg:flex items-center gap-9 text-[10px] font-mono tracking-[.16em] text-gray-500"
+            >
+
+                <a href="#platform" class="text-sm text-black-600 transition-colors">
+                    PLATFORM
+                </a>
+
+                <a href="#pipeline" class="text-sm transition-colors">
+                    PIPELINE
+                </a>
+
+                <a href="#use-cases" class="text-sm transition-colors">
+                    USE CASES
+                </a>
+
+                <a href="#stack" class="text-sm transition-colors">
+                    STACK
+                </a>
+
+            </div>
+
+
+            <div class="flex items-center gap-5">
+
+                <a
+                    href="/auth/sign-in"
+                    class=" hidden sm:block text-sm font-mono tracking-[.15em] text-gray-500 hover:text-white transition-colors"
+                >
+                    LOGIN
+                </a>
+
+                <a
+                    href="/auth/sign-up"
+                    class="btn-magnetic bg-white text-sm text-black px-5 py-2.5 text-[10px] font-semibold tracking-[.15em] uppercase  transition-colors"
+                >
+                    Get Started
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <main>
+
+
+        <!-- ===================================================== -->
+        <!-- HERO -->
+        <!-- ===================================================== -->
+
+        <section
+            class="hero-section min-h-screen relative flex items-center pt-28 pb-24 overflow-hidden"
+        >
+
+            <div
+                class="max-w-[1400px] w-full mx-auto px-6 relative z-10"
+            >
+
+                <div class="hero-layout flex flex-col items-center text-center gap-14">
+
+                    <!-- HERO COPY -->
+
+                    <div class="hero-copy max-w-6xl mx-auto">
+
+                        <div
+                            class="hero-item flex items-center justify-center gap-3 mb-8"
+                        >
+
+                        
+
+                        </div>
+
+
+                        <h1
+                            class="hero-title font-display font-semibold text-[16vw] sm:text-[12vw] lg:text-[9.4rem] xl:text-[10.5rem] leading-[.82] tracking-[-.085em] text-white"
+                        >
+
+                            THE WEB
+
+                            <br>
+
+                            <span class="text-gray-600">
+                                IS YOUR
+                            </span>
+                            <span class="text-black-600">
+                                DATASET
+                            </span>
+
+                            
+
+                            
+
+                        </h1>
+
+
+                        <div class="flex flex-col items-center gap-8 mt-12">
+
+                            <p
+                                class="hero-item max-w-2xl text-gray-400 text-base md:text-lg leading-relaxed font-light"
+                            >
+                                DataPilot turns the open web into structured,
+                                usable intelligence, define what you need,
+                                let agents discover, crawl, extract and verify it.
+                            </p>
+
+
+                            <div class="hero-item flex gap-3 justify-center">
+
+                                <a
+                                    href="/auth/sign-up"
+                                    class="btn-magnetic bg-accent text-white px-7 py-4 text-xs font-semibold uppercase tracking-[.15em]"
+                                    style="color: #ffffff !important;"
+                                >
+                                    Start Researching
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- HERO TERMINAL -->
+
+               
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- MARQUEE -->
+        <!-- ===================================================== -->
+
+        <div
+            class="border-y border-white/5 bg-[#070707]/80 py-7 overflow-hidden marquee-mask bg-white"
+        >
+
+            <div class="flex whitespace-nowrap animate-marquee w-max">
+
+                <div class="flex gap-20 px-10 items-center">
+
+                    <span class="font-display text-2xl text-black/25">
+                        DISCOVER
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-black/25">
+                        CRAWL
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-black/25">
+                        EXTRACT
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-black/25">
+                        VERIFY
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-black/25">
+                        STRUCTURE
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-black/25">
+                        SCALE
+                    </span>
+
+                </div>
+
+
+                <div class="flex gap-20 px-10 items-center">
+
+                    <span class="font-display text-2xl text-white/25">
+                        DISCOVER
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-white/25">
+                        CRAWL
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-white/25">
+                        EXTRACT
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-white/25">
+                        VERIFY
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-white/25">
+                        STRUCTURE
+                    </span>
+
+                    <span class="text-accent">✦</span>
+
+                    <span class="font-display text-2xl text-white/25">
+                        SCALE
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ===================================================== -->
+        <!-- PROBLEM -->
+        <!-- ===================================================== -->
+
+        <section
+            id="platform"
+            class="py-40 px-6 relative z-10"
+        >
+
+            <div class="max-w-[1400px] mx-auto">
+
+                <div class="grid lg:grid-cols-[.35fr_1.65fr] gap-12">
+
+                    <div>
+
+                        <span class="section-label text-accent font-mono text-[10px] tracking-[.2em]">
+                            01 / THE PROBLEM
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <h2
+                            class="section-title font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight tracking-[-.04em] text-white"
+                        >
+                            THE DATA EXISTS.
+                            <span class="text-gray-600">
+                                GETTING IT DOESN'T.
+                            </span>
+                        </h2>
+
+
+                        <div class="grid md:grid-cols-2 gap-12 mt-12">
+
+                            <p class="text-gray-400 leading-relaxed font-light">
+                                The internet contains an enormous amount of
+                                useful information. But finding it, navigating
+                                thousands of pages and turning it into clean
+                                data is still painfully manual.
+                            </p>
+
+                            <p class="text-gray-500 leading-relaxed font-light">
+                                DataPilot gives that work an execution layer:
+                                research agents, web discovery, crawling,
+                                extraction and verification in one pipeline.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- CAPABILITIES -->
+        <!-- ===================================================== -->
+
+        <section
+            class="py-32 px-6 bg-[#080808] border-y border-white/5 relative z-10"
+        >
+
+            <div class="max-w-[1400px] mx-auto">
+
+                <div class="flex justify-between items-end mb-20">
+
+                    <div>
+
+                        <span class="text-accent font-mono text-[10px] tracking-[.2em]">
+                            02 / THE PLATFORM
+                        </span>
+
+                        <h2
+                            class="font-display text-5xl md:text-7xl tracking-[-.06em] text-white mt-5"
+                        >
+                            ONE SYSTEM.
+                            <br>
+                            <span class="text-gray-600">
+                                SIX MOVEMENTS.
+                            </span>
+                        </h2>
+
+                    </div>
+
+                    <span class="hidden md:block font-mono text-[9px] text-gray-600">
+                        DATAPILOT / CORE
+                    </span>
+
+                </div>
+
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3">
+
+                    <!-- CARD 01 -->
+
+                    <div
+                        class="spotlight-card capability-card border border-white/10 p-8 md:p-10 min-h-[350px] group"
+                    >
+
+                        <div class="flex justify-between">
+
+                            <span class="font-mono text-xs text-accent">
+                                01
+                            </span>
+
+                            <i
+                                data-lucide="search"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white transition-colors"
+                            ></i>
+
+                        </div>
+
+                        <div class="mt-24">
+
+                            <h3 class="font-display text-3xl text-white">
+                                Discover
+                            </h3>
+
+                            <p class="text-gray-500 mt-4 max-w-sm leading-relaxed">
+                                Find relevant websites, documents, companies,
+                                people and sources from a simple research objective.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CARD 02 -->
+
+                    <div
+                        class="spotlight-card capability-card border border-white/10 border-l-0 p-8 md:p-10 min-h-[350px] group"
+                    >
+
+                        <div class="flex justify-between">
+
+                            <span class="font-mono text-xs text-accent">
+                                02
+                            </span>
+
+                            <i
+                                data-lucide="globe-2"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white transition-colors"
+                            ></i>
+
+                        </div>
+
+                        <div class="mt-24">
+
+                            <h3 class="font-display text-3xl text-white">
+                                Crawl
+                            </h3>
+
+                            <p class="text-gray-500 mt-4 leading-relaxed">
+                                Navigate relevant pages and collect the content
+                                needed for the research task.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CARD 03 -->
+
+                    <div
+                        class="spotlight-card capability-card border border-white/10 border-l-0 p-8 md:p-10 min-h-[350px] group"
+                    >
+
+                        <div class="flex justify-between">
+
+                            <span class="font-mono text-xs text-accent">
+                                03
+                            </span>
+
+                            <i
+                                data-lucide="scan-text"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white transition-colors"
+                            ></i>
+
+                        </div>
+
+                        <div class="mt-24">
+
+                            <h3 class="font-display text-3xl text-white">
+                                Extract
+                            </h3>
+
+                            <p class="text-gray-500 mt-4 leading-relaxed">
+                                Transform unstructured web pages into the exact
+                                entities and fields your workflow requires.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CARD 04 -->
+
+                    <div
+                        class="spotlight-card capability-card border border-white/10 border-t-0 p-8 md:p-10 min-h-[350px] group"
+                    >
+
+                        <div class="flex justify-between">
+
+                            <span class="font-mono text-xs text-accent">
+                                04
+                            </span>
+
+                            <i
+                                data-lucide="shield-check"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white transition-colors"
+                            ></i>
+
+                        </div>
+
+                        <div class="mt-24">
+
+                            <h3 class="font-display text-3xl text-white">
+                                Verify
+                            </h3>
+
+                            <p class="text-gray-500 mt-4 leading-relaxed">
+                                Cross-check extracted information against source
+                                content before it becomes part of your dataset.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CARD 05 -->
+
+                    <div
+                        class="spotlight-card capability-card border border-white/10 border-l-0 border-t-0 p-8 md:p-10 min-h-[350px] group"
+                    >
+
+                        <div class="flex justify-between">
+
+                            <span class="font-mono text-xs text-accent">
+                                05
+                            </span>
+
+                            <i
+                                data-lucide="braces"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white transition-colors"
+                            ></i>
+
+                        </div>
+
+                        <div class="mt-24">
+
+                            <h3 class="font-display text-3xl text-white">
+                                Structure
+                            </h3>
+
+                            <p class="text-gray-500 mt-4 leading-relaxed">
+                                Turn messy information into clean, consistent,
+                                machine-readable records.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CARD 06 -->
+
+                    <div
+                        class="spotlight-card capability-card border border-white/10 border-l-0 border-t-0 p-8 md:p-10 min-h-[350px] group"
+                    >
+
+                        <div class="flex justify-between">
+
+                            <span class="font-mono text-xs text-accent">
+                                06
+                            </span>
+
+                            <i
+                                data-lucide="layers-3"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white transition-colors"
+                            ></i>
+
+                        </div>
+
+                        <div class="mt-24">
+
+                            <h3 class="font-display text-3xl text-white">
+                                Scale
+                            </h3>
+
+                            <p class="text-gray-500 mt-4 leading-relaxed">
+                                Repeat research workflows across hundreds or
+                                thousands of sources.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+     
+
+
+        <!-- ===================================================== -->
+        <!-- LIVE RESEARCH -->
+        <!-- ===================================================== -->
+
+        <section
+            class="py-32 px-6 bg-[#080808] border-y border-white/5 relative z-10"
+        >
+
+            <div class="max-w-[1400px] mx-auto">
+
+                <div class="mb-16">
+
+                    <span class="text-accent font-mono text-[10px] tracking-[.2em]">
+                        04 / SEE IT WORK
+                    </span>
+
+                    <h2
+                        class="font-display text-5xl md:text-7xl tracking-[-.06em] text-white mt-5"
+                    >
+                        RESEARCH,
+                        <span class="text-gray-600">
+                            EXECUTED.
+                        </span>
+                    </h2>
+
+                </div>
+
+
+                <div class="grid lg:grid-cols-[1.2fr_.8fr] gap-6">
+
+                    <!-- DATA TERMINAL -->
+
+                    <div class="glass-panel rounded-2xl p-6 md:p-8">
+
+                        <div class="flex justify-between items-center mb-8">
+
+                            <div class="font-mono text-[9px] text-gray-600">
+                                RESEARCH / 001
+                            </div>
+
+                            <div class="flex items-center gap-2">
+
+                               
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="border border-white/10 rounded-xl overflow-hidden">
+
+                            <div class="grid grid-cols-4 px-4 py-3 bg-white/[.025] border-b border-white/10 text-[9px] font-mono text-gray-600">
+
+                                <span>COMPANY</span>
+                                <span>ROLE</span>
+                                <span>LOCATION</span>
+                                <span>STATUS</span>
+
+                            </div>
+
+
+                            <div class="data-row grid grid-cols-4 px-4 py-5 text-xs">
+
+                                <span class="text-white">
+                                    Acme AI
+                                </span>
+
+                                <span class="text-gray-400">
+                                    Backend Engineer
+                                </span>
+
+                                <span class="text-gray-500">
+                                    Bengaluru
+                                </span>
+
+                                <span class="text-green-500">
+                                    Verified
+                                </span>
+
+                            </div>
+
+
+                            <div class="data-row grid grid-cols-4 px-4 py-5 text-xs">
+
+                                <span class="text-white">
+                                    Orbit Labs
+                                </span>
+
+                                <span class="text-gray-400">
+                                    Node.js Engineer
+                                </span>
+
+                                <span class="text-gray-500">
+                                    Remote
+                                </span>
+
+                                <span class="text-green-500">
+                                    Verified
+                                </span>
+
+                            </div>
+
+
+                            <div class="data-row grid grid-cols-4 px-4 py-5 text-xs">
+
+                                <span class="text-white">
+                                    Vector AI
+                                </span>
+
+                                <span class="text-gray-400">
+                                    Platform Engineer
+                                </span>
+
+                                <span class="text-gray-500">
+                                    Mumbai
+                                </span>
+
+                                <span class="text-green-500">
+                                    Verified
+                                </span>
+
+                            </div>
+
+
+                            <div class="data-row grid grid-cols-4 px-4 py-5 text-xs">
+
+                                <span class="text-white">
+                                    Nova Systems
+                                </span>
+
+                                <span class="text-gray-400">
+                                    Software Engineer
+                                </span>
+
+                                <span class="text-gray-500">
+                                    Delhi NCR
+                                </span>
+
+                                <span class="text-green-500">
+                                    Verified
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-8 flex justify-between items-center">
+
+                            <span class="font-mono text-[9px] text-gray-600">
+                                STRUCTURED OUTPUT
+                            </span>
+
+                            <span class="font-mono text-[9px] text-accent">
+                                JSON / CSV / XLSX
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- METRICS -->
+
+                    <div class="grid grid-cols-2 gap-4">
+
+                        <div class="glass-panel spotlight-card rounded-xl p-7">
+
+                            <span class="font-mono text-[9px] text-gray-600">
+                                SOURCES
+                            </span>
+
+                            <div
+                                class="counter font-display text-5xl md:text-6xl text-white mt-16"
+                                data-value="247"
+                            >
+                                0
+                            </div>
+
+                            <p class="text-gray-600 text-xs mt-2">
+                                discovered
+                            </p>
+
+                        </div>
+
+
+                        <div class="glass-panel spotlight-card rounded-xl p-7">
+
+                            <span class="font-mono text-[9px] text-gray-600">
+                                PAGES
+                            </span>
+
+                            <div
+                                class="counter font-display text-5xl md:text-6xl text-white mt-16"
+                                data-value="1842"
+                            >
+                                0
+                            </div>
+
+                            <p class="text-gray-600 text-xs mt-2">
+                                crawled
+                            </p>
+
+                        </div>
+
+
+                        <div class="glass-panel spotlight-card rounded-xl p-7">
+
+                            <span class="font-mono text-[9px] text-gray-600">
+                                RECORDS
+                            </span>
+
+                            <div
+                                class="counter font-display text-5xl md:text-6xl text-white mt-16"
+                                data-value="1284"
+                            >
+                                0
+                            </div>
+
+                            <p class="text-gray-600 text-xs mt-2">
+                                extracted
+                            </p>
+
+                        </div>
+
+
+                        <div class="glass-panel spotlight-card rounded-xl p-7">
+
+                            <span class="font-mono text-[9px] text-gray-600">
+                                VERIFIED
+                            </span>
+
+                            <div class="font-display text-5xl md:text-6xl text-accent mt-16">
+                                94%
+                            </div>
+
+                            <p class="text-gray-600 text-xs mt-2">
+                                source coverage
+                            </p>
+
+                        </div>
+                        
+
+                    </div>
+
+                </div>
+
+                <div class="mt-12 flex justify-center">
+                    <a
+                        href="/auth/sign-up"
+                        class="btn-magnetic bg-accent text-white px-7 py-4 text-xs font-semibold uppercase tracking-[.15em]"
+                        style="color: #ffffff !important;"
+                    >
+                        Get Started
+                    </a>
+                </div>
+
+            </div>
+
+            
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- USE CASES -->
+        <!-- ===================================================== -->
+
+        <section
+            id="use-cases"
+            class="py-40 px-6 relative z-10"
+        >
+
+            <div class="max-w-[1400px] mx-auto">
+
+                <div class="grid lg:grid-cols-[.7fr_1.3fr] gap-20">
+
+                    <div>
+
+                        <span class="text-accent font-mono text-[10px] tracking-[.2em]">
+                            05 / USE CASES
+                        </span>
+
+                        <h2
+                            class="font-display text-5xl md:text-7xl tracking-[-.06em] text-white mt-6 leading-[.9]"
+                        >
+                            BUILT FOR
+                            <br>
+                            <span class="text-gray-600">
+                                INFORMATION
+                            </span>
+                            <br>
+                            WORK.
+                        </h2>
+
+                    </div>
+
+
+                    <div>
+
+                        <div class="usecase-row group py-8 border-t border-white/10 flex justify-between items-center">
+
+                            <div class="flex items-center gap-8">
+
+                                <span class="font-mono text-accent text-xs">
+                                    01
+                                </span>
+
+                                <h3 class="font-display text-3xl md:text-5xl text-white group-hover:translate-x-3 transition-transform duration-500">
+                                    Lead Generation
+                                </h3>
+
+                            </div>
+
+                            <i
+                                data-lucide="arrow-up-right"
+                                class="w-6 h-6 text-gray-600 group-hover:text-accent transition-colors"
+                            ></i>
+
+                        </div>
+
+
+                        <div class="usecase-row group py-8 border-t border-white/10 flex justify-between items-center">
+
+                            <div class="flex items-center gap-8">
+
+                                <span class="font-mono text-accent text-xs">
+                                    02
+                                </span>
+
+                                <h3 class="font-display text-3xl md:text-5xl text-white group-hover:translate-x-3 transition-transform duration-500">
+                                    Market Research
+                                </h3>
+
+                            </div>
+
+                            <i
+                                data-lucide="arrow-up-right"
+                                class="w-6 h-6 text-gray-600 group-hover:text-accent transition-colors"
+                            ></i>
+
+                        </div>
+
+
+                        <div class="usecase-row group py-8 border-t border-white/10 flex justify-between items-center">
+
+                            <div class="flex items-center gap-8">
+
+                                <span class="font-mono text-accent text-xs">
+                                    03
+                                </span>
+
+                                <h3 class="font-display text-3xl md:text-5xl text-white group-hover:translate-x-3 transition-transform duration-500">
+                                    Job Intelligence
+                                </h3>
+
+                            </div>
+
+                            <i
+                                data-lucide="arrow-up-right"
+                                class="w-6 h-6 text-gray-600 group-hover:text-accent transition-colors"
+                            ></i>
+
+                        </div>
+
+
+                        <div class="usecase-row group py-8 border-t border-white/10 flex justify-between items-center">
+
+                            <div class="flex items-center gap-8">
+
+                                <span class="font-mono text-accent text-xs">
+                                    04
+                                </span>
+
+                                <h3 class="font-display text-3xl md:text-5xl text-white group-hover:translate-x-3 transition-transform duration-500">
+                                    Sales Intelligence
+                                </h3>
+
+                            </div>
+
+                            <i
+                                data-lucide="arrow-up-right"
+                                class="w-6 h-6 text-gray-600 group-hover:text-accent transition-colors"
+                            ></i>
+
+                        </div>
+
+
+                        <div class="usecase-row group py-8 border-y border-white/10 flex justify-between items-center">
+
+                            <div class="flex items-center gap-8">
+
+                                <span class="font-mono text-accent text-xs">
+                                    05
+                                </span>
+
+                                <h3 class="font-display text-3xl md:text-5xl text-white group-hover:translate-x-3 transition-transform duration-500">
+                                    Competitive Research
+                                </h3>
+
+                            </div>
+
+                            <i
+                                data-lucide="arrow-up-right"
+                                class="w-6 h-6 text-gray-600 group-hover:text-accent transition-colors"
+                            ></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- STACK -->
+        <!-- ===================================================== -->
+
+        <section
+            id="stack"
+            class="py-32 px-6 bg-[#080808] border-y border-white/5 relative z-10"
+        >
+
+            <div class="max-w-[1400px] mx-auto">
+
+                <div class="mb-20">
+
+                    <span class="text-accent font-mono text-[10px] tracking-[.2em]">
+                        06 / UNDER THE HOOD
+                    </span>
+
+                    <h2
+                        class="font-display text-5xl md:text-7xl tracking-[-.06em] text-white mt-5"
+                    >
+                        THE WEB,
+                        <span class="text-gray-600">
+                            ORCHESTRATED.
+                        </span>
+                    </h2>
+
+                </div>
+
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-white/10">
+
+                    <div class="bg-[#080808] p-8 min-h-[240px]">
+
+                        <span class="font-mono text-accent text-xs">
+                            01
+                        </span>
+
+                        <i
+                            data-lucide="bot"
+                            class="w-6 h-6 text-white mt-16"
+                        ></i>
+
+                        <h3 class="text-white mt-5">
+                            Agent
+                        </h3>
+
+                        <p class="text-gray-600 text-xs mt-2">
+                            Plans research.
+                        </p>
+
+                    </div>
+
+
+                    <div class="bg-[#080808] p-8 min-h-[240px]">
+
+                        <span class="font-mono text-accent text-xs">
+                            02
+                        </span>
+
+                        <i
+                            data-lucide="search"
+                            class="w-6 h-6 text-white mt-16"
+                        ></i>
+
+                        <h3 class="text-white mt-5">
+                            Tavily
+                        </h3>
+
+                        <p class="text-gray-600 text-xs mt-2">
+                            Discovers sources.
+                        </p>
+
+                    </div>
+
+
+                    <div class="bg-[#080808] p-8 min-h-[240px]">
+
+                        <span class="font-mono text-accent text-xs">
+                            03
+                        </span>
+
+                        <i
+                            data-lucide="database"
+                            class="w-6 h-6 text-white mt-16"
+                        ></i>
+
+                        <h3 class="text-white mt-5">
+                            Maxun
+                        </h3>
+
+                        <p class="text-gray-600 text-xs mt-2">
+                            Crawls the web.
+                        </p>
+
+                    </div>
+
+
+                    <div class="bg-[#080808] p-8 min-h-[240px]">
+
+                        <span class="font-mono text-accent text-xs">
+                            04
+                        </span>
+
+                        <i
+                            data-lucide="monitor"
+                            class="w-6 h-6 text-white mt-16"
+                        ></i>
+
+                        <h3 class="text-white mt-5">
+                            Browser
+                        </h3>
+
+                        <p class="text-gray-600 text-xs mt-2">
+                            Handles dynamic pages.
+                        </p>
+
+                    </div>
+
+
+                    <div class="bg-[#080808] p-8 min-h-[240px]">
+
+                        <span class="font-mono text-accent text-xs">
+                            05
+                        </span>
+
+                        <i
+                            data-lucide="brain-circuit"
+                            class="w-6 h-6 text-white mt-16"
+                        ></i>
+
+                        <h3 class="text-white mt-5">
+                            LLM
+                        </h3>
+
+                        <p class="text-gray-600 text-xs mt-2">
+                            Reasons and extracts.
+                        </p>
+
+                    </div>
+
+
+                    <div class="bg-[#080808] p-8 min-h-[240px]">
+
+                        <span class="font-mono text-accent text-xs">
+                            06
+                        </span>
+
+                        <i
+                            data-lucide="database-zap"
+                            class="w-6 h-6 text-white mt-16"
+                        ></i>
+
+                        <h3 class="text-white mt-5">
+                            Pipeline
+                        </h3>
+
+                        <p class="text-gray-600 text-xs mt-2">
+                            Structures output.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ARCHITECTURE CODE -->
+
+                <div class="glass-panel rounded-2xl mt-6 p-6 md:p-10">
+
+                    <div class="flex justify-between border-b border-white/10 pb-5">
+
+                        <span class="font-mono text-[9px] text-gray-600">
+                            datapilot.architecture
+                        </span>
+
+                        <span class="font-mono text-[9px] text-green-500">
+                            SYSTEM ONLINE
+                        </span>
+
+                    </div>
+
+
+                    <div class="font-mono text-xs md:text-sm leading-[2.4] mt-8">
+
+                        <div>
+                            <span class="text-gray-700">01</span>
+                            <span class="text-accent ml-5">agent</span>
+                            <span class="text-gray-500">
+                                → objective
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700">02</span>
+                            <span class="text-accent ml-5">tavily</span>
+                            <span class="text-gray-500">
+                                → source discovery
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700">03</span>
+                            <span class="text-accent ml-5">maxun</span>
+                            <span class="text-gray-500">
+                                → web extraction
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700">04</span>
+                            <span class="text-accent ml-5">browser</span>
+                            <span class="text-gray-500">
+                                → dynamic content
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700">05</span>
+                            <span class="text-accent ml-5">llm</span>
+                            <span class="text-gray-500">
+                                → schema extraction
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700">06</span>
+                            <span class="text-accent ml-5">pipeline</span>
+                            <span class="text-gray-500">
+                                → verify + structure + deliver
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- OUTPUT -->
+        <!-- ===================================================== -->
+
+        <section
+            class="py-40 px-6 relative z-10"
+        >
+
+            <div class="max-w-[1400px] mx-auto">
+
+                <div class="grid lg:grid-cols-[.7fr_1.3fr] gap-20 items-start">
+
+                    <div>
+
+                        <span class="text-accent font-mono text-[10px] tracking-[.2em]">
+                            07 / OUTPUT
+                        </span>
+
+                        <h2
+                            class="font-display text-5xl md:text-7xl tracking-[-.06em] text-white mt-6 leading-[.9]"
+                        >
+                            NO RAW
+                            <br>
+                            PAGES.
+                            <br>
+                            <span class="text-gray-600">
+                                JUST DATA.
+                            </span>
+                        </h2>
+
+                    </div>
+
+
+                    <div class="glass-panel rounded-2xl overflow-hidden">
+
+                        <div
+                            class="px-6 py-4 border-b border-white/10 flex justify-between"
+                        >
+
+                            <span class="font-mono text-[9px] text-gray-600">
+                                response.json
+                            </span>
+
+                            <span class="font-mono text-[9px] text-accent">
+                                VERIFIED
+                            </span>
+
+                        </div>
+
+
+                        <div class="p-6 md:p-10 font-mono text-xs md:text-sm leading-loose">
+
+                            <div>
+                                <span class="text-gray-600">{</span>
+                            </div>
+
+                            <div class="pl-5">
+
+                                <span class="text-accent">
+                                    "company"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    :
+                                </span>
+
+                                <span class="text-green-400">
+                                    "Acme AI"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    ,
+                                </span>
+
+                            </div>
+
+
+                            <div class="pl-5">
+
+                                <span class="text-accent">
+                                    "role"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    :
+                                </span>
+
+                                <span class="text-green-400">
+                                    "Backend Engineer"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    ,
+                                </span>
+
+                            </div>
+
+
+                            <div class="pl-5">
+
+                                <span class="text-accent">
+                                    "location"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    :
+                                </span>
+
+                                <span class="text-green-400">
+                                    "Bengaluru"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    ,
+                                </span>
+
+                            </div>
+
+
+                            <div class="pl-5">
+
+                                <span class="text-accent">
+                                    "source"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    :
+                                </span>
+
+                                <span class="text-green-400">
+                                    "company.com/careers"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    ,
+                                </span>
+
+                            </div>
+
+
+                            <div class="pl-5">
+
+                                <span class="text-accent">
+                                    "verified"
+                                </span>
+
+                                <span class="text-gray-600">
+                                    :
+                                </span>
+
+                                <span class="text-accent">
+                                    true
+                                </span>
+
+                            </div>
+
+
+                            <div>
+                                <span class="text-gray-600">}</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- FINAL CTA -->
+        <!-- ===================================================== -->
+
+        <section
+            class="min-h-[80vh] flex items-center justify-center px-6 relative overflow-hidden border-t border-white/5"
+        >
+
+            <div class="relative z-10 text-center max-w-6xl">
+
+                <span class="text-accent font-mono text-[10px] tracking-[.25em]">
+                    READY WHEN YOU ARE
+                </span>
+
+
+                <h2
+                    class="font-display font-semibold text-[13vw] md:text-[9rem] lg:text-[10rem] tracking-[-.085em] leading-[.78] text-white mt-10"
+                >
+                    TURN THE WEB
+                    <br>
+                    <span class="text-gray-600">
+                        INTO DATA.
+                    </span>
+                </h2>
+
+
+                <p
+                    class="text-gray-500 max-w-xl mx-auto mt-10 text-base md:text-lg leading-relaxed"
+                >
+                    Define the research, dataPilot handles the web,
+                    the extraction and the structure.
+                </p>
+
+
+                <div class="flex justify-center gap-4 mt-10">
+
+                    <a
+                        href="/auth/sign-up"
+                        class="btn-magnetic bg-accent text-black px-9 py-4 text-xs font-semibold uppercase tracking-[.15em]"
+                        style="color: #ffffff !important;"
+                    >
+                        Get Started
+                    </a>
+
+                    <a
+                        href="/auth/sign-in"
+                        class="btn-magnetic border border-white/15 text-white px-9 py-4 text-xs font-semibold uppercase tracking-[.15em] hover:bg-white hover:text-black transition-colors"
+                    >
+                        Login
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ===================================================== -->
+        <!-- FOOTER -->
+        <!-- ===================================================== -->
+
+        <footer
+            class="relative bg-[#020202] border-t border-white/10 z-20"
+        >
+
+            <div class="max-w-[1400px] mx-auto px-6 py-16">
+
+                <div class="grid md:grid-cols-4 gap-12">
+
+                    <div class="md:col-span-2">
+
+                        <a
+                            href="#"
+                            class="font-display font-semibold text-2xl tracking-[-.08em] text-white"
+                        >
+                            DATAPILOT<span class="text-accent">.</span>
+                        </a>
+
+                        <p class="text-gray-600 text-sm max-w-sm mt-5 leading-relaxed">
+                            An AI-powered web research and data intelligence
+                            platform for turning the open web into structured information.
+                        </p>
+
+                        <div class="flex gap-5 mt-8">
+
+                            <a
+                                href="#"
+                                class="text-gray-600 hover:text-white transition-colors"
+                            >
+                                <i data-lucide="github" class="w-5 h-5"></i>
+                            </a>
+
+                            <a
+                                href="#"
+                                class="text-gray-600 hover:text-white transition-colors"
+                            >
+                                <i data-lucide="linkedin" class="w-5 h-5"></i>
+                            </a>
+
+                            <a
+                                href="#"
+                                class="text-gray-600 hover:text-white transition-colors"
+                            >
+                                <i data-lucide="twitter" class="w-5 h-5"></i>
+                            </a>
+
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="font-mono text-[10px] tracking-[.18em] text-white">
+                            PRODUCT
+                        </span>
+
+                        <div class="flex flex-col gap-4 mt-6">
+
+                            <a href="#platform" class="text-gray-600 hover:text-white text-sm">
+                                Platform
+                            </a>
+
+                            <a href="#use-cases" class="text-gray-600 hover:text-white text-sm">
+                                Use Cases
+                            </a>
+
+                            <a href="#stack" class="text-gray-600 hover:text-white text-sm">
+                                Technology
+                            </a>
+
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="font-mono text-[10px] tracking-[.18em] text-white">
+                            RESOURCES
+                        </span>
+
+                        <div class="flex flex-col gap-4 mt-6">
+
+                           
+
+
+                            <a href="https://github.com/byteanshul-12/DataPilot-"  target="_blank" class="text-gray-600 hover:text-white text-sm">
+                                GitHub
+                            </a>
+
+                            <a href="mailto:raj.pranav1@icloud.com" target="_blank" class="text-gray-600 hover:text-white text-sm">
+                                Contact
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="border-t border-white/5 mt-16 pt-6 flex flex-col md:flex-row justify-between gap-4 font-mono text-[9px] text-gray-700"
+                >
+
+                    <span>
+                        WEB → DATA → INTELLIGENCE
+                    </span>
+
+                    <span>
+                        © 2026 DATAPILOT
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="border-t border-white/5 min-h-[16vw] flex items-center justify-center overflow-hidden"
+            >
+
+                <span
+                    class="font-display font-black text-[15vw] tracking-[-.09em] text-black whitespace-nowrap"
+                >
+                    DATAPILOT
+                </span>
+
+            </div>
+
+        </footer>
+
+    </main>
+
+
+
+    <!-- ========================================================= -->
+    <!-- JAVASCRIPT -->
+    <!-- ========================================================= -->
+
+    <script>
+
+        /* =======================================================
+           ICONS
+        ======================================================= */
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+
+/* =======================================================
+           SPOTLIGHT
+        ======================================================= */
+
+        document.addEventListener(
+            'mousemove',
+            function(e) {
+
+                document
+                    .querySelectorAll('.spotlight-card')
+                    .forEach(card => {
+
+                        const rect =
+                            card.getBoundingClientRect();
+
+                        const x =
+                            e.clientX - rect.left;
+
+                        const y =
+                            e.clientY - rect.top;
+
+                        card.style.setProperty(
+                            '--mouse-x',
+                            `${x}px`
+                        );
+
+                        card.style.setProperty(
+                            '--mouse-y',
+                            `${y}px`
+                        );
+
+                    });
+
+            }
+        );
+
+
+        /* =======================================================
+           MAGNETIC BUTTONS
+        ======================================================= */
+
+        document
+            .querySelectorAll('.btn-magnetic')
+            .forEach(btn => {
+
+                btn.addEventListener(
+                    'mousemove',
+                    function(e) {
+
+                        const rect =
+                            btn.getBoundingClientRect();
+
+                        const x =
+                            e.clientX -
+                            rect.left -
+                            rect.width / 2;
+
+                        const y =
+                            e.clientY -
+                            rect.top -
+                            rect.height / 2;
+
+
+                        gsap.to(btn, {
+                            x: x * .25,
+                            y: y * .25,
+                            duration: .25,
+                            ease: 'power2.out'
+                        });
+
+                    }
+                );
+
+
+                btn.addEventListener(
+                    'mouseleave',
+                    function() {
+
+                        gsap.to(btn, {
+                            x: 0,
+                            y: 0,
+                            duration: .35,
+                            ease: 'elastic.out(1,.5)'
+                        });
+
+                    }
+                );
+
+            });
+
+
+        /* =======================================================
+           GSAP
+        ======================================================= */
+
+        gsap.registerPlugin(ScrollTrigger);
+
+
+        /* HERO — Optimus-inspired letter reveal */
+
+        const heroTimeline = gsap.timeline({
+            defaults: {
+                ease: 'power2.out'
+            }
+        });
+
+        heroTimeline
+            .from('.hero-item', {
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.12
+            })
+            .from('.hero-title', {
+                opacity: 0,
+                duration: 1.0
+            }, '-=0.5')
+            .from('.hero-terminal', {
+                opacity: 0,
+                duration: 1.0
+            }, '-=0.6');
+
+        /* Subtle floating motion for the hero terminal */
+        gsap.to('.hero-terminal', {
+            y: -8,
+            duration: 3.5,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut'
+        });
+
+        /* SECTION TITLES */
+
+        gsap.utils
+            .toArray('.section-title')
+            .forEach(title => {
+
+                gsap.from(title, {
+
+                    scrollTrigger: {
+                        trigger: title,
+                        start: 'top 82%'
+                    },
+
+                    y: 70,
+                    opacity: 0,
+                    duration: 1,
+                    ease: 'power4.out'
+
+                });
+
+            });
+
+
+        /* CAPABILITY CARDS */
+
+        gsap.utils
+            .toArray('.capability-card')
+            .forEach((card, index) => {
+
+                gsap.from(card, {
+
+                    scrollTrigger: {
+                        trigger: card,
+                        start: 'top 90%'
+                    },
+
+                    y: 70,
+                    opacity: 0,
+                    duration: .9,
+                    delay: index * .04,
+                    ease: 'power3.out'
+
+                });
+
+            });
+
+
+        /* PIPELINE */
+
+        gsap.utils
+            .toArray('.pipeline-row')
+            .forEach((row, index) => {
+
+                gsap.from(row, {
+
+                    scrollTrigger: {
+                        trigger: row,
+                        start: 'top 88%'
+                    },
+
+                    x: 60,
+                    opacity: 0,
+                    duration: .8,
+                    delay: index * .04,
+                    ease: 'power3.out'
+
+                });
+
+            });
+
+
+        /* USE CASES */
+
+        gsap.utils
+            .toArray('.usecase-row')
+            .forEach((row, index) => {
+
+                gsap.from(row, {
+
+                    scrollTrigger: {
+                        trigger: row,
+                        start: 'top 90%'
+                    },
+
+                    x: -50,
+                    opacity: 0,
+                    duration: .8,
+                    delay: index * .05,
+                    ease: 'power3.out'
+
+                });
+
+            });
+
+
+        /* TERMINAL STEPS */
+
+        gsap.utils
+            .toArray('.agent-step')
+            .forEach((step, index) => {
+
+                gsap.from(step, {
+
+                    scrollTrigger: {
+                        trigger: '.hero-terminal',
+                        start: 'top 80%'
+                    },
+
+                    x: 30,
+                    opacity: 0,
+                    duration: .6,
+                    delay: .8 + index * .12,
+                    ease: 'power3.out'
+
+                });
+
+            });
+
+
+        /* COUNTERS */
+
+        gsap.utils
+            .toArray('.counter')
+            .forEach(counter => {
+
+                const value =
+                    parseInt(counter.dataset.value);
+
+                gsap.fromTo(
+                    counter,
+                    { innerText: 0 },
+                    {
+                        innerText: value,
+                        duration: 1.8,
+                        ease: 'power2.out',
+                        snap: {
+                            innerText: 1
+                        },
+
+                        scrollTrigger: {
+                            trigger: counter,
+                            start: 'top 85%',
+                            once: true
+                        },
+
+                        onUpdate: function() {
+
+                            counter.innerText =
+                                Math.floor(
+                                    parseFloat(counter.innerText)
+                                ).toLocaleString();
+
+                        }
+
+                    }
+                );
+
+            });
+
+
+        /* STACK */
+
+        gsap.utils
+            .toArray('#stack .bg-\\[\\#080808\\]')
+            .forEach((item, index) => {
+
+                gsap.from(item, {
+
+                    scrollTrigger: {
+                        trigger: '#stack',
+                        start: 'top 80%'
+                    },
+
+                    y: 40,
+                    opacity: 0,
+                    duration: .7,
+                    delay: index * .07,
+                    ease: 'power3.out'
+
+                });
+
+            });
+
+
+        /* OUTPUT */
+
+        gsap.from('.glass-panel', {
+
+            scrollTrigger: {
+                trigger: '.glass-panel',
+                start: 'top 95%'
+            },
+
+            opacity: 0,
+            y: 30,
+            duration: .8,
+            stagger: .08,
+            ease: 'power3.out'
+
+        });
+
+
+        /* REFRESH AFTER LOAD */
+
+        window.addEventListener(
+            'load',
+            function() {
+
+                setTimeout(
+                    () => ScrollTrigger.refresh(),
+                    500
+                );
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>
