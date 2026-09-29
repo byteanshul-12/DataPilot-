@@ -73,8 +73,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Verify Python Syntax & Modules
-        working-directory: ai
-        run: python3 -m py_compile main.py workflow_engine.py llm_client.py mailer.py
+        run: python3 -m py_compile ai/*.py
 
   # ========================================================
   # Phase 2: CD Deployment (Triggers Render Deploy Hooks)
@@ -86,25 +85,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Backend Service
-        if: env.RENDER_BACKEND_HOOK != ''
         env:
           RENDER_BACKEND_HOOK: ${{ secrets.RENDER_BACKEND_HOOK }}
         run: |
-          echo "Deploying Backend to Render..."
-          curl -f -X POST "$RENDER_BACKEND_HOOK"
+          if [ -n "$RENDER_BACKEND_HOOK" ]; then
+            echo "Deploying Backend to Render..."
+            curl -f -X POST "$RENDER_BACKEND_HOOK"
+          else
+            echo "RENDER_BACKEND_HOOK secret is not set yet. Skipping."
+          fi
 
       - name: Deploy AI Microservice
-        if: env.RENDER_AI_HOOK != ''
         env:
           RENDER_AI_HOOK: ${{ secrets.RENDER_AI_HOOK }}
         run: |
-          echo "Deploying AI Service to Render..."
-          curl -f -X POST "$RENDER_AI_HOOK"
+          if [ -n "$RENDER_AI_HOOK" ]; then
+            echo "Deploying AI Service to Render..."
+            curl -f -X POST "$RENDER_AI_HOOK"
+          else
+            echo "RENDER_AI_HOOK secret is not set yet. Skipping."
+          fi
 
       - name: Deploy Frontend
-        if: env.RENDER_FRONTEND_HOOK != ''
         env:
           RENDER_FRONTEND_HOOK: ${{ secrets.RENDER_FRONTEND_HOOK }}
         run: |
-          echo "Deploying Frontend to Render..."
-          curl -f -X POST "$RENDER_FRONTEND_HOOK"
+          if [ -n "$RENDER_FRONTEND_HOOK" ]; then
+            echo "Deploying Frontend to Render..."
+            curl -f -X POST "$RENDER_FRONTEND_HOOK"
+          else
+            echo "RENDER_FRONTEND_HOOK secret is not set yet. Skipping."
+          fi
