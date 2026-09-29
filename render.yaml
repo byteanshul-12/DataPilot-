@@ -68,7 +68,7 @@ services:
         fromService:
           type: web
           name: datapilot-backend
-          property: url
+          property: host
       - key: RESEND_API_KEY
         sync: false
       - key: SMTP_FROM
@@ -90,4 +90,4 @@ services:
         fromService:
           type: web
           name: datapilot-backend
-          property: url
+          property: host
