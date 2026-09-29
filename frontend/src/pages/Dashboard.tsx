@@ -163,13 +163,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // 1. Ignore if in IME composition or macOS inline predictive text
-    if (e.nativeEvent.isComposing || e.keyCode === 229) {
-      return;
-    }
-
-    // 2. Identify the Enter/Return key across all OS and browsers
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLFormElement>) => {
+    // Identify Enter / Return key across all Mac and PC browsers
     const isEnterKey =
       e.key === "Enter" ||
       e.key === "Return" ||
@@ -180,17 +175,12 @@ export default function Dashboard() {
 
     if (!isEnterKey) return;
 
-    // 3. Modifier handling:
-    // - Shift + Enter: allow newline in textarea
-    // - Cmd + Enter (Mac: e.metaKey): force submit
-    // - Ctrl + Enter (PC/Mac: e.ctrlKey): force submit
-    // - Plain Enter (without Shift): submit
-    const isCmdOrCtrl = e.metaKey || e.ctrlKey;
-
-    if (e.shiftKey && !isCmdOrCtrl) {
+    // Allow Shift + Enter to insert a newline
+    if (e.shiftKey && !e.metaKey && !e.ctrlKey) {
       return;
     }
 
+    // Immediately stop newline insertion and submit
     e.preventDefault();
     e.stopPropagation();
 
