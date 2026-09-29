@@ -1,7 +1,6 @@
 databases:
   - name: datapilot-db
     databaseName: datapilot
-    user: postgres
     plan: free
     region: oregon
 
