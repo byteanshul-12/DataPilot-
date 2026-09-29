@@ -65,10 +65,7 @@ services:
       - key: BETTER_AUTH_SECRET
         generateValue: true
       - key: BETTER_AUTH_URL
-        fromService:
-          type: web
-          name: datapilot-backend
-          property: host
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: SMTP_FROM
