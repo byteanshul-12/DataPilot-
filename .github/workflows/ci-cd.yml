@@ -1,0 +1,118 @@
+name: DataPilot CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ========================================================
+  # Phase 1: CI Verification (Lint, Typecheck, Build tests)
+  # ========================================================
+  build-and-test-backend:
+    name: Backend CI (TypeScript & Build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Typecheck & Build Backend
+        working-directory: backend
+        run: npm run build
+
+  build-and-test-frontend:
+    name: Frontend CI (Vite & React 19)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Frontend Application
+        working-directory: frontend
+        run: npm run build
+
+  verify-ai-service:
+    name: AI Microservice CI (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: ai/requirements.txt
+
+      - name: Install AI Dependencies
+        working-directory: ai
+        run: pip install -r requirements.txt
+
+      - name: Verify Python Syntax & Modules
+        run: python3 -m py_compile ai/*.py
+
+  # ========================================================
+  # Phase 2: CD Deployment (Triggers Render Deploy Hooks)
+  # ========================================================
+  deploy-to-render:
+    name: Deploy to Render
+    needs: [build-and-test-backend, build-and-test-frontend, verify-ai-service]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Backend Service
+        env:
+          RENDER_BACKEND_HOOK: ${{ secrets.RENDER_BACKEND_HOOK }}
+        run: |
+          if [ -n "$RENDER_BACKEND_HOOK" ]; then
+            echo "Deploying Backend to Render..."
+            curl -f -X POST "$RENDER_BACKEND_HOOK"
+          else
+            echo "RENDER_BACKEND_HOOK secret is not set yet. Skipping."
+          fi
+
+      - name: Deploy AI Microservice
+        env:
+          RENDER_AI_HOOK: ${{ secrets.RENDER_AI_HOOK }}
+        run: |
+          if [ -n "$RENDER_AI_HOOK" ]; then
+            echo "Deploying AI Service to Render..."
+            curl -f -X POST "$RENDER_AI_HOOK"
+          else
+            echo "RENDER_AI_HOOK secret is not set yet. Skipping."
+          fi
+
+      - name: Deploy Frontend
+        env:
+          RENDER_FRONTEND_HOOK: ${{ secrets.RENDER_FRONTEND_HOOK }}
+        run: |
+          if [ -n "$RENDER_FRONTEND_HOOK" ]; then
+            echo "Deploying Frontend to Render..."
+            curl -f -X POST "$RENDER_FRONTEND_HOOK"
+          else
+            echo "RENDER_FRONTEND_HOOK secret is not set yet. Skipping."
+          fi
