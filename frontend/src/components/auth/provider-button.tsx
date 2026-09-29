@@ -89,6 +89,12 @@ export function ProviderButton({
         onSuccess: (res: any) => {
           const redirectUrl = res?.data?.url || res?.url;
           if (redirectUrl) {
+            try {
+              if (window.top && window.top !== window) {
+                window.top.location.href = redirectUrl;
+                return;
+              }
+            } catch (e) {}
             window.location.href = redirectUrl;
           }
         },
