@@ -16,9 +16,26 @@ export const apiClient = axios.create({
     withCredentials: true, // send cookies
 });
 
+apiClient.interceptors.request.use((config) => {
+    const guestId = localStorage.getItem('datapilot_guest_id');
+    if (guestId) {
+        config.headers['x-guest-id'] = guestId;
+    }
+    return config;
+});
+
 import { DashboardStats, CollectionTask, Workflow, DatasetResponse, SourceItem } from '@/types';
 
 export const api = {
+    // guest session
+    loginAsGuest: async (): Promise<{ authenticated: boolean; guestId: string; type: string }> => {
+        const { data } = await apiClient.post<{ authenticated: boolean; guestId: string; type: string }>("/auth/guest");
+        if (data?.guestId) {
+            localStorage.setItem('datapilot_guest_id', data.guestId);
+        }
+        return data;
+    },
+
     // dashboard 
     getDashboardStats: async (): Promise<DashboardStats> => {
         const {data} = await apiClient.get<DashboardStats>("/dashboard/stats");
