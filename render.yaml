@@ -60,10 +60,7 @@ services:
           name: datapilot-redis
           property: connectionString
       - key: AI_SERVICE_URL
-        fromService:
-          type: web
-          name: datapilot-ai
-          property: host
+        value: https://datapilot-ai-o6c8.onrender.com
       - key: BETTER_AUTH_SECRET
         generateValue: true
       - key: BETTER_AUTH_URL
