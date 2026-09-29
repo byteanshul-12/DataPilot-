@@ -26,6 +26,7 @@ export const auth = betterAuth({
     ...(process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map((s) => s.trim()) : []),
   ].filter(Boolean),
   advanced: {
+    disableCSRFCheck: true,
     defaultCookieAttributes: {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production',
