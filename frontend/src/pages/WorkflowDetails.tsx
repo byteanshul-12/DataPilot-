@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { api} from "@/lib/api";
+import { api } from "@/lib/api";
 import { Workflow, DatasetRecord, SourceItem } from "@/types";
 import { StatusBadge } from "@/pages/Workflows";
 import { Button } from "@/components/ui/button";
@@ -54,10 +54,7 @@ export default function WorkflowDetails() {
     if (!id) return;
 
     const loadDetails = () => {
-      api
-        .getWorkflowById(id)
-        .then(setWorkflow)
-        .catch(console.error);
+      api.getWorkflowById(id).then(setWorkflow).catch(console.error);
 
       api
         .getDataset(id)
@@ -80,10 +77,18 @@ export default function WorkflowDetails() {
   }, [id]);
 
   const isGeneralPrompt =
-    Boolean(workflow?.executionSteps?.some((s) => s.step === "general_response")) ||
-    Boolean(!workflow?.planResponse && records.length === 0 && !workflow?.recordsCount && workflow?.status === "completed");
+    Boolean(
+      workflow?.executionSteps?.some((s) => s.step === "general_response")
+    ) ||
+    Boolean(
+      !workflow?.planResponse &&
+        records.length === 0 &&
+        !workflow?.recordsCount &&
+        workflow?.status === "completed"
+    );
 
-  const isRunning = workflow?.status === "running" || workflow?.status === "queued";
+  const isRunning =
+    workflow?.status === "running" || workflow?.status === "queued";
 
   const handleDeduplicate = async () => {
     if (!id) return;
@@ -91,11 +96,7 @@ export default function WorkflowDetails() {
     setDeduping(true);
 
     try {
-      await api.deduplicateDataset(
-        id,
-        dedupMatchField,
-        dedupThreshold
-      );
+      await api.deduplicateDataset(id, dedupMatchField, dedupThreshold);
 
       const res = await api.getDataset(id);
       setRecords(res.records);
@@ -109,14 +110,13 @@ export default function WorkflowDetails() {
   if (!workflow) {
     return (
       <AppLayout>
-        <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-black text-white">
-
+        <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.1]"
+            className="pointer-events-none absolute inset-0 opacity-[0.035] dark:opacity-[0.045]"
             style={{
               backgroundImage: `
-                linear-gradient(to right, #ffffff 1px, transparent 1px),
-                linear-gradient(to bottom, #ffffff 1px, transparent 1px)
+                linear-gradient(to right, currentColor 1px, transparent 1px),
+                linear-gradient(to bottom, currentColor 1px, transparent 1px)
               `,
               backgroundSize: "48px 48px",
             }}
@@ -124,15 +124,13 @@ export default function WorkflowDetails() {
 
           <div className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
             <div className="text-center">
-
-              <div className="mx-auto mb-4 flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950">
-                <RotateCw className="h-4 w-4 animate-spin text-zinc-600" />
+              <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                <RotateCw className="h-4 w-4 animate-spin text-zinc-500" />
               </div>
 
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Loading workflow details...
               </p>
-
             </div>
           </div>
         </div>
@@ -142,233 +140,370 @@ export default function WorkflowDetails() {
 
   return (
     <AppLayout>
-      <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-black text-white">
+      <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
 
-        {/* Background Grid */}
+        {/* =====================================================
+            BACKGROUND GRID
+        ===================================================== */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          className="pointer-events-none absolute inset-0 opacity-[0.025] dark:opacity-[0.035]"
           style={{
             backgroundImage: `
-              linear-gradient(to right, #ffffff 1px, transparent 1px),
-              linear-gradient(to bottom, #ffffff 1px, transparent 1px)
+              linear-gradient(to right, currentColor 1px, transparent 1px),
+              linear-gradient(to bottom, currentColor 1px, transparent 1px)
             `,
             backgroundSize: "48px 48px",
           }}
         />
 
-        <div className="relative mx-auto max-w-6xl px-6 py-10">
+        <div className="relative mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
 
-          {/* header  */}
-          <div className="mb-8 border-b border-zinc-800 pb-7">
-
+          {/* =====================================================
+              HEADER
+          ===================================================== */}
+          <div className="mb-7 border-b border-zinc-200 pb-7 dark:border-zinc-800">
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
 
               <div className="min-w-0">
 
-                <div className="mb-3 flex items-center gap-3">
-
+                {/* Breadcrumb */}
+                <div className="mb-4 flex items-center gap-2.5">
                   <Link
                     to="/workflows"
-                    className="text-xs text-zinc-600 transition-colors hover:text-zinc-300"
+                    className="text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-200"
                   >
-                    ← Workflows
+                    Workflows
                   </Link>
 
-                  <span className="text-zinc-800">/</span>
+                  <span className="text-zinc-300 dark:text-zinc-700">
+                    /
+                  </span>
 
                   <StatusBadge status={workflow.status} />
-
                 </div>
 
-                <h1 className="max-w-3xl text-2xl font-semibold tracking-tight text-white">
+                <h1 className="max-w-3xl text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-3xl">
                   {workflow.prompt}
                 </h1>
 
-                <p className="mt-2 font-mono text-[11px] text-zinc-700">
+                <p className="mt-2 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-600">
                   {workflow.id}
                 </p>
-
               </div>
 
               {/* Actions */}
               <div className="flex shrink-0 items-center gap-2">
-
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => api.rerunWorkflow(workflow.id)}
-                  className="h-8 rounded-md border-zinc-800 bg-zinc-950 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                  className="h-8 rounded-lg cursor-pointer border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-600 shadow-none hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
                 >
                   <RotateCw className="mr-1.5 h-3.5 w-3.5" />
                   Rerun
                 </Button>
+
+
+
 
                 {workflow.status === "running" && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => api.cancelWorkflow(workflow.id)}
-                    className="h-8 rounded-md border-red-500/20 bg-transparent text-xs text-red-400 hover:bg-red-500/10"
+                    className="h-8 rounded-lg border-red-200 bg-white px-3 text-xs font-medium text-red-500 shadow-none hover:bg-red-50 dark:border-red-500/20 dark:bg-zinc-950 dark:text-red-400 dark:hover:bg-red-500/10"
                   >
                     <XCircle className="mr-1.5 h-3.5 w-3.5" />
                     Cancel
                   </Button>
                 )}
-
               </div>
-
             </div>
           </div>
 
-          {/* CASE 1: GENERAL PROMPT (Q&A / Conversational) */}
+          {/* =====================================================
+              CASE 1 — GENERAL AI RESPONSE
+          ===================================================== */}
           {isGeneralPrompt ? (
-            <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8 shadow-xl">
-              <div className="flex items-center gap-2 mb-4 text-emerald-400">
-                <Sparkles className="h-4 w-4" />
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  DataPilot Response
-                </h2>
+            <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+
+              {/* Response Header */}
+              <div className="flex items-center gap-3 border-b border-zinc-200/80 px-6 py-4 dark:border-zinc-800/80 sm:px-7">
+
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                  <Sparkles className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">
+                    DataPilot
+                  </p>
+
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    AI Response
+                  </p>
+                </div>
               </div>
-              <div className="prose prose-invert max-w-none text-zinc-200 leading-relaxed text-sm sm:text-base">
-                <MarkdownRenderer content={workflow.aiResponse || "No response provided."} />
+
+              {/* Response Content */}
+              <div className="px-6 py-6 sm:px-7 sm:py-8">
+                <div className="prose prose-zinc dark:prose-invert max-w-none text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+                  <MarkdownRenderer
+                    content={workflow.aiResponse || "No response provided."}
+                  />
+                </div>
               </div>
             </div>
+
           ) : isRunning ? (
-            /* CASE 2A: TASK IS RUNNING -> SHOW HIGH-TECH SCANNING ANIMATION */
-            <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-8 sm:p-14 text-center shadow-2xl">
-              {/* Radar Pulse Animation */}
-              <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping" />
-                <div className="absolute inset-3 rounded-full bg-emerald-500/15 animate-pulse" />
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-950/80 text-emerald-400 shadow-xl shadow-emerald-500/20">
-                  <RotateCw className="h-7 w-7 animate-spin text-emerald-400" />
-                </div>
-              </div>
 
-              <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                Scraping & Extracting Data
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-                Discovering target web sources, executing headless browser scraping, verifying social accounts, and formatting your dataset...
-              </p>
+            /* =====================================================
+               CASE 2A — TASK RUNNING
+            ===================================================== */
+            <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white px-6 py-12 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)] sm:px-12 sm:py-16">
 
-              {/* Live Scraping Progress Tracker */}
-              <div className="mt-8 max-w-md mx-auto space-y-2.5 text-left">
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-800/90 bg-black/70 px-4 py-2.5">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                  <span className="text-xs text-zinc-200 font-medium">Scanning permitted directories & corporate sites</span>
+              {/* Subtle grid */}
+              <div
+                className="pointer-events-none absolute inset-0 opacity-[0.025] dark:opacity-[0.035]"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(to right, currentColor 1px, transparent 1px),
+                    linear-gradient(to bottom, currentColor 1px, transparent 1px)
+                  `,
+                  backgroundSize: "32px 32px",
+                }}
+              />
+
+              <div className="relative">
+
+                {/* Scanning Animation */}
+                <div className="relative mx-auto mb-7 flex h-24 w-24 items-center justify-center">
+  {/* Outer animated ring */}
+  <div className="absolute inset-0 rounded-full border border-zinc-300 opacity-30 animate-ping dark:border-zinc-700" />
+
+  {/* Inner animated ring */}
+  <div className="absolute inset-3 rounded-full border border-zinc-300/70 animate-pulse dark:border-zinc-700/70" />
+
+  {/* Center */}
+  <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-zinc-300 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-zinc-900 dark:bg-zinc-100" />
+  </div>
+</div>
+
+                {/* Status */}
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900 dark:bg-zinc-100" />
+
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+                    Workflow Running
+                  </span>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-800/90 bg-black/70 px-4 py-2.5">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400/80 animate-pulse shrink-0" />
-                  <span className="text-xs text-zinc-400">Extracting entity attributes & contact endpoints</span>
-                </div>
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-800/90 bg-black/70 px-4 py-2.5">
-                  <div className="h-2 w-2 rounded-full bg-zinc-600 shrink-0" />
-                  <span className="text-xs text-zinc-500">Enriching social profiles (LinkedIn, GitHub, X) & preparing Excel</span>
+
+                <h3 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-2xl">
+                  Scraping & Extracting Data
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-lg text-xs leading-6 text-zinc-500 dark:text-zinc-400 sm:text-sm">
+                  Discovering target sources, executing browser workflows,
+                  validating records, and preparing your dataset.
+                </p>
+
+                {/* Progress Tracker */}
+                <div className="mx-auto mt-9 max-w-md space-y-2 text-left">
+
+                  {/* Active */}
+                  <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900 dark:bg-zinc-100" />
+                    </div>
+
+                    <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
+                      Scanning permitted directories & corporate sites
+                    </span>
+                  </div>
+
+                  {/* Processing */}
+                  <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 dark:bg-zinc-600" />
+                    </div>
+
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Extracting entity attributes & contact endpoints
+                    </span>
+                  </div>
+
+                  {/* Pending */}
+                  <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                    </div>
+
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      Enriching profiles & preparing Excel
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+
           ) : !showResult ? (
-            /* CASE 2B: TASK COMPLETED BUT USER HAS NOT CLICKED "VIEW RESULT" */
-            <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-8 sm:p-12 text-center shadow-xl">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-950/80 text-emerald-400 shadow-lg shadow-emerald-950/40">
-                <CheckCircle2 className="h-8 w-8" />
+
+            /* =====================================================
+               CASE 2B — COMPLETED / SUMMARY
+            ===================================================== */
+            <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white px-6 py-10 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)] sm:px-12 sm:py-14">
+
+              {/* Success Icon */}
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                <CheckCircle2 className="h-7 w-7 text-zinc-800 dark:text-zinc-200" />
               </div>
 
-              <Badge className="mb-3 border-emerald-800 bg-emerald-950/80 text-emerald-300 text-xs px-3 py-1 font-medium">
-                Scraping & Data Processing Complete
-              </Badge>
+              {/* Status */}
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
 
-              <h3 className="text-2xl font-semibold text-white tracking-tight">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+                  Workflow Complete
+                </span>
+              </div>
+
+              <h3 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
                 Data Ready for Review
               </h3>
-              <p className="mt-2 text-sm text-zinc-400 max-w-lg mx-auto">
-                Successfully collected and processed verified records with social profiles, tech stack, and contact links.
+
+              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                Your collected records have been processed and prepared for
+                review, including available profiles and contact information.
               </p>
 
               {/* Metric Chips */}
-              <div className="my-6 flex flex-wrap items-center justify-center gap-3">
-                <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3.5 py-2 text-xs text-zinc-200">
-                  <Database className="h-4 w-4 text-emerald-400" />
-                  <span className="font-semibold text-white">{records.length || workflow.recordsCount || 20}</span> Records Extracted
+              <div className="my-7 flex flex-wrap items-center justify-center gap-2.5">
+
+                <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/70">
+                  <Database className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                    {records.length || workflow.recordsCount || 20}
+                  </span>
+
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Records
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3.5 py-2 text-xs text-zinc-200">
-                  <Globe className="h-4 w-4 text-sky-400" />
-                  Social Profiles Linked
+
+                <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/70">
+                  <Globe className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Social Profiles
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3.5 py-2 text-xs text-zinc-200">
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-                  Excel (.xlsx) Generated
+
+                <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/70">
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Excel Generated
+                  </span>
                 </div>
               </div>
 
-              {/* CTA: View Result */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
+              {/* CTA */}
+              <div className="flex flex-col items-center justify-center gap-2.5 sm:flex-row">
+
                 <Button
                   size="lg"
                   onClick={() => {
                     setShowResult(true);
                     setActiveTab("dataset");
                   }}
-                  className="h-11 px-7 bg-white text-black hover:bg-zinc-200 font-semibold text-sm gap-2 shadow-lg shadow-white/10 transition-all hover:scale-[1.02] cursor-pointer"
+                  className="h-10.5 rounded-lg bg-zinc-950 px-6 text-sm font-medium text-white shadow-sm transition-all hover:bg-zinc-800 hover:shadow-md dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 cursor-pointer"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="mr-2 h-4 w-4" />
                   View Result
                 </Button>
 
-                <a href={api.getExportUrl(workflow.id, "xlsx")} download>
+                <a
+                  href={api.getExportUrl(workflow.id, "xlsx")}
+                  download
+                >
                   <Button
                     variant="outline"
                     size="lg"
-                    className="h-11 px-6 border-emerald-700/60 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 font-medium text-sm transition-colors cursor-pointer"
+                    className="h-10.5 cursor-pointer rounded-lg border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-700 shadow-none hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Download Excel (.xlsx)
+                    Download Excel
                   </Button>
                 </a>
               </div>
             </div>
+
           ) : (
-            /* CASE 2C: USER CLICKED "VIEW RESULT" -> DISPLAY DATASET & RESULT TABS */
+
+            /* =====================================================
+               CASE 2C — DATASET RESULT
+            ===================================================== */
             <div>
-              {/* Results Action Bar */}
-              <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-emerald-900/60 bg-emerald-950/20 p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-3.5">
+
+              {/* =================================================
+                  RESULTS ACTION BAR
+              ================================================= */}
+              <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)] sm:flex-row sm:items-center sm:justify-between">
+
+                <div className="flex items-center gap-3">
+
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setShowResult(false)}
-                    className="h-8 gap-1.5 border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                    className="h-8 gap-1.5 rounded-lg border-zinc-200 bg-white px-2.5 text-xs text-zinc-500 shadow-none hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
                     <span>Summary</span>
                   </Button>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-emerald-200">
-                      Collected Dataset ({records.length || workflow.recordsCount || 20} records)
+
+                  <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+                  <div className="flex items-center gap-2.5">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      Collected Dataset
                     </p>
-                    <Badge className="border-emerald-800 bg-emerald-900/60 text-[10px] text-emerald-300">
+
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      {records.length || workflow.recordsCount || 20} records
+                    </span>
+
+                    <span className="hidden items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 sm:inline-flex">
+                      <span className="h-1 w-1 rounded-full bg-zinc-700 dark:bg-zinc-300" />
                       Verified
-                    </Badge>
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <a href={api.getExportUrl(workflow.id, "xlsx")} download>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a
+                    href={api.getExportUrl(workflow.id, "xlsx")}
+                    download
+                  >
                     <Button
                       size="sm"
-                      className="h-9 border border-emerald-500 bg-emerald-600 text-xs font-medium text-white shadow-sm hover:bg-emerald-500 transition-colors"
+                      className="h-9 cursor-pointer rounded-lg bg-zinc-950 px-4 text-xs font-medium text-white shadow-sm transition-all hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
                     >
                       <Download className="mr-1.5 h-3.5 w-3.5" />
-                      Download Excel (.xlsx)
+                      Download Excel
                     </Button>
                   </a>
                 </div>
               </div>
 
-              {/* Tabs for Results View */}
-              <div className="mb-7 flex overflow-x-auto border-b border-zinc-800">
+              {/* =================================================
+                  RESULT TABS
+              ================================================= */}
+              <div className="mb-7 flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-800">
+
                 <TabButton
                   active={activeTab === "dataset"}
                   onClick={() => setActiveTab("dataset")}
@@ -392,521 +527,585 @@ export default function WorkflowDetails() {
                 >
                   Source Lineage
                 </TabButton>
-              </div>
-
-          {/* execution timeline  */}
-
-          {activeTab === "stepper" && (
-            <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-
-              <div className="border-b border-zinc-800 px-5 py-4">
-
-                <p className="text-sm font-medium text-zinc-200">
-                  Execution pipeline
-                </p>
-
-                <p className="mt-1 text-xs text-zinc-600">
-                  Multi-agent workflow execution steps.
-                </p>
 
               </div>
 
-              <div className="p-6">
+              {/* =================================================
+                  EXECUTION TIMELINE
+              ================================================= */}
+              {activeTab === "stepper" && (
+                <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
 
-                <div className="relative pl-8">
+                  <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                      Execution pipeline
+                    </p>
 
-                  {/* Timeline line */}
-                  <div className="absolute bottom-3 left-[11px] top-3 w-px bg-zinc-800" />
-
-                  <div className="space-y-8">
-
-                    {(
-                      workflow.executionSteps || [
-                        {
-                          step: "intent_parsing",
-                          status: "completed",
-                        },
-                        {
-                          step: "source_discovery",
-                          status: "completed",
-                        },
-                        {
-                          step: "data_scraping",
-                          status: "completed",
-                        },
-                        {
-                          step: "deduplication",
-                          status: "completed",
-                        },
-                      ]
-                    ).map((stepItem, index) => (
-
-                      <div
-                        key={index}
-                        className="relative flex items-center justify-between gap-4"
-                      >
-
-                        {/* Icon */}
-                        <div className="absolute -left-8 flex h-6 w-6 items-center justify-center bg-zinc-950">
-
-                          {stepItem.status === "completed" ? (
-                            <CheckCircle2 className="h-4 w-4 text-zinc-300" />
-                          ) : (
-                            <Clock className="h-4 w-4 text-zinc-700" />
-                          )}
-
-                        </div>
-
-                        <div>
-
-                          <p className="text-sm font-medium capitalize text-zinc-200">
-                            {stepItem.step.replace(/_/g, " ")}
-                          </p>
-
-                          <p className="mt-1 text-xs text-zinc-600">
-                            {stepItem.status === "completed"
-                              ? "Successfully completed"
-                              : "Pending execution"}
-                          </p>
-
-                        </div>
-
-                        <Badge
-                          variant="outline"
-                          className="shrink-0 border-zinc-800 bg-transparent text-[11px] font-normal capitalize text-zinc-500"
-                        >
-                          {stepItem.status}
-                        </Badge>
-
-                      </div>
-
-                    ))}
-
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* dataset  */}
-
-          {activeTab === "dataset" && (
-            <div className="space-y-4">
-
-              {/* dataset toolbar  */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                <div className="relative w-full sm:w-80">
-
-                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-700" />
-
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search dataset records..."
-                    className="h-9 border-zinc-800 bg-zinc-950 pl-9 text-xs text-zinc-300 placeholder:text-zinc-700 focus:border-zinc-600 focus:ring-0"
-                  />
-
-                </div>
-
-                <div className="flex items-center gap-2">
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDeduplicate}
-                    disabled={deduping}
-                    className="h-9 border-zinc-800 bg-zinc-950 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-                  >
-                    <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
-
-                    {deduping ? "Processing..." : "Deduplicate"}
-                  </Button>
-
-                  <a
-                    href={api.getExportUrl(workflow.id, "xlsx")}
-                    download
-                  >
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-9 border-emerald-800/40 bg-emerald-950/20 text-xs text-emerald-400 hover:bg-emerald-900/30 hover:text-emerald-300"
-                    >
-                      <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
-                      Excel (.xlsx)
-                    </Button>
-                  </a>
-
-                  <a
-                    href={api.getExportUrl(workflow.id, "csv")}
-                    download
-                  >
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-9 border-zinc-800 bg-zinc-950 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-                    >
-                      <Download className="mr-1.5 h-3.5 w-3.5" />
-                      CSV
-                    </Button>
-                  </a>
-
-                  <a
-                    href={api.getExportUrl(workflow.id, "json")}
-                    download
-                  >
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-9 border-zinc-800 bg-zinc-950 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-                    >
-                      <Download className="mr-1.5 h-3.5 w-3.5" />
-                      JSON
-                    </Button>
-                  </a>
-
-                </div>
-
-              </div>
-
-              {/* dataset  */}
-              <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-
-                <div className="border-b border-zinc-800 px-5 py-4">
-
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                    <div>
-                      <p className="text-sm font-medium text-zinc-200">
-                        Dataset Records
-                      </p>
-
-                      <p className="mt-1 text-xs text-zinc-600">
-                        {records.filter((rec) => {
-                          if (!searchQuery.trim()) return true;
-                          const q = searchQuery.toLowerCase().trim();
-                          const d = rec.data || {};
-                          return JSON.stringify(d).toLowerCase().includes(q) || (rec.source || "").toLowerCase().includes(q);
-                        }).length.toLocaleString()} {searchQuery ? "matching" : ""} records collected & validated
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1 rounded-md border border-zinc-800 bg-black p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setViewFormat("ui")}
-                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                          viewFormat === "ui"
-                            ? "bg-zinc-800 text-white"
-                            : "text-zinc-500 hover:text-zinc-300"
-                        }`}
-                      >
-                        <Table className="h-3.5 w-3.5" />
-                        UI List
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setViewFormat("json")}
-                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                          viewFormat === "json"
-                            ? "bg-zinc-800 text-white"
-                            : "text-zinc-500 hover:text-zinc-300"
-                        }`}
-                      >
-                        <Code2 className="h-3.5 w-3.5" />
-                        Raw JSON
-                      </button>
-                    </div>
-
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
+                      Multi-agent workflow execution steps.
+                    </p>
                   </div>
 
-                </div>
+                  <div className="p-6">
+                    <div className="relative pl-8">
 
-                <div className="p-0">
+                      {/* Timeline line */}
+                      <div className="absolute bottom-3 left-[11px] top-3 w-px bg-zinc-200 dark:bg-zinc-800" />
 
-                  {(() => {
-                    const filteredRecords = records.filter((rec) => {
-                      if (!searchQuery.trim()) return true;
-                      const q = searchQuery.toLowerCase().trim();
-                      const d = rec.data || {};
-                      return JSON.stringify(d).toLowerCase().includes(q) || (rec.source || "").toLowerCase().includes(q);
-                    });
+                      <div className="space-y-8">
+                        {(
+                          workflow.executionSteps || [
+                            {
+                              step: "intent_parsing",
+                              status: "completed",
+                            },
+                            {
+                              step: "source_discovery",
+                              status: "completed",
+                            },
+                            {
+                              step: "data_scraping",
+                              status: "completed",
+                            },
+                            {
+                              step: "deduplication",
+                              status: "completed",
+                            },
+                          ]
+                        ).map((stepItem, index) => (
+                          <div
+                            key={index}
+                            className="relative flex items-center justify-between gap-4"
+                          >
 
-                    if (filteredRecords.length > 0) {
-                      return viewFormat === "ui" ? (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse">
-                            <thead>
-                              <tr className="border-b border-zinc-800 bg-zinc-900/50 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
-                                <th className="px-4 py-3">#</th>
-                                <th className="px-4 py-3">Title / Role</th>
-                                <th className="px-4 py-3">Company / Org</th>
-                                <th className="px-4 py-3">Location</th>
-                                <th className="px-4 py-3">Details / Salary</th>
-                                <th className="px-4 py-3">Social & Profiles</th>
-                                <th className="px-4 py-3 text-right">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-800/60 text-xs">
-                              {filteredRecords.map((rec, idx) => {
-                                const d = (rec.data || {}) as Record<string, any>;
-                                const title = String(d.job_title || d.company_name || d.title || d.name || `Item ${idx + 1}`);
-                                const org = String(d.company || d.organization || d.category || d.industry || "—");
-                                const loc = String(d.location || d.headquarters || "—");
-                                const details = String(
-                                  d.salary_range
-                                    ? `${d.salary_range} • ${d.tech_stack || ""}`
-                                    : d.funding_raised || d.key_skills || d.key_attributes || d.description || "—"
-                                );
-                                const link = String(d.apply_url || d.website || rec.source || "#");
+                            {/* Icon */}
+                            <div className="absolute -left-8 flex h-6 w-6 items-center justify-center bg-white dark:bg-zinc-950">
+                              {stepItem.status === "completed" ? (
+                                <CheckCircle2 className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+                              ) : (
+                                <Clock className="h-4 w-4 text-zinc-400 dark:text-zinc-700" />
+                              )}
+                            </div>
 
-                                return (
-                                  <tr key={rec.id || idx} className="hover:bg-zinc-900/40 transition-colors">
-                                    <td className="px-4 py-3 font-mono text-[11px] text-zinc-600">{idx + 1}</td>
-                                    <td className="px-4 py-3 font-medium text-zinc-100 max-w-xs truncate">{title}</td>
-                                    <td className="px-4 py-3 text-zinc-300 font-medium">{org}</td>
-                                    <td className="px-4 py-3 text-zinc-400">{loc}</td>
-                                    <td className="px-4 py-3 text-zinc-400 max-w-xs truncate" title={details}>
-                                      {details}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <div className="flex items-center gap-1.5 flex-wrap max-w-xs">
-                                        {d.linkedin && (
-                                          <a
-                                            href={d.linkedin}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 rounded bg-blue-950/60 border border-blue-800/50 px-2 py-0.5 text-[10px] text-blue-300 hover:text-white hover:bg-blue-900 transition-colors"
-                                          >
-                                            <span>LinkedIn</span>
-                                            <ExternalLink className="h-2.5 w-2.5" />
-                                          </a>
-                                        )}
-                                        {d.github && (
-                                          <a
-                                            href={d.github}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 rounded bg-zinc-800/80 border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-200 hover:text-white hover:bg-zinc-700 transition-colors"
-                                          >
-                                            <span>GitHub</span>
-                                            <ExternalLink className="h-2.5 w-2.5" />
-                                          </a>
-                                        )}
-                                        {d.twitter && (
-                                          <a
-                                            href={d.twitter}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 rounded bg-sky-950/60 border border-sky-800/50 px-2 py-0.5 text-[10px] text-sky-300 hover:text-white hover:bg-sky-900 transition-colors"
-                                          >
-                                            <span>X / Twitter</span>
-                                            <ExternalLink className="h-2.5 w-2.5" />
-                                          </a>
-                                        )}
-                                        {d.contact_email && !d.linkedin && !d.github && (
-                                          <span className="font-mono text-[11px] text-zinc-400">{d.contact_email}</span>
-                                        )}
-                                        {!d.linkedin && !d.github && !d.twitter && !d.contact_email && (
-                                          <span className="text-zinc-600">—</span>
-                                        )}
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
-                                      >
-                                        <span>{d.apply_url ? "Apply" : "Source Link"}</span>
-                                        <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <pre className="max-h-[600px] overflow-auto rounded-md border border-zinc-800 bg-black p-4 font-mono text-[11px] leading-5 text-zinc-400">
-                          {JSON.stringify(filteredRecords, null, 2)}
-                        </pre>
-                      );
-                    }
+                            <div>
+                              <p className="text-sm font-medium capitalize text-zinc-900 dark:text-zinc-200">
+                                {stepItem.step.replace(/_/g, " ")}
+                              </p>
 
-                    return (
-                      <div className="py-16 text-center">
-
-                        <Database className="mx-auto mb-3 h-5 w-5 text-zinc-700" />
-
-                        <p className="text-sm text-zinc-500">
-                          {searchQuery ? `No records matching "${searchQuery}"` : "No dataset records"}
-                        </p>
-
-                        <p className="mt-1 text-xs text-zinc-700">
-                          {searchQuery ? "Try searching for a different keyword." : "Records collected by this workflow will appear here."}
-                        </p>
-
-                      </div>
-                    );
-                  })()}
-
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-          {/* sources  */}
-
-          {activeTab === "sources" && (
-            <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-
-              <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
-
-                <div>
-
-                  <p className="text-sm font-medium text-zinc-200">
-                    Source lineage
-                  </p>
-
-                  <p className="mt-1 text-xs text-zinc-600">
-                    URL provenance and extraction metrics.
-                  </p>
-
-                </div>
-
-                <Globe className="h-4 w-4 text-zinc-700" />
-
-              </div>
-
-              <div className="overflow-x-auto">
-
-                <table className="w-full min-w-[700px] text-left">
-
-                  <thead>
-
-                    <tr className="border-b border-zinc-800">
-
-                      <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
-                        Source
-                      </th>
-
-                      <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
-                        Domain
-                      </th>
-
-                      <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
-                        Status
-                      </th>
-
-                      <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
-                        Records
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody className="divide-y divide-zinc-800/70">
-
-                    {sources.length > 0 ? (
-
-                      sources.map((src, idx) => (
-
-                        <tr
-                          key={idx}
-                          className="group transition-colors hover:bg-zinc-900/50"
-                        >
-
-                          <td className="px-5 py-4">
-
-                            <a
-                              href={src.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex max-w-md items-center gap-2 font-mono text-xs text-zinc-400 transition-colors hover:text-white"
-                            >
-                              <span className="truncate">
-                                {src.url}
-                              </span>
-
-                              <ExternalLink className="h-3 w-3 shrink-0 text-zinc-700" />
-                            </a>
-
-                          </td>
-
-                          <td className="px-5 py-4 font-mono text-xs text-zinc-600">
-                            {src.domain}
-                          </td>
-
-                          <td className="px-5 py-4">
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
+                                {stepItem.status === "completed"
+                                  ? "Successfully completed"
+                                  : "Pending execution"}
+                              </p>
+                            </div>
 
                             <Badge
                               variant="outline"
-                              className="border-zinc-700 bg-transparent text-[11px] font-normal text-zinc-400"
+                              className="shrink-0 rounded-full border-zinc-200 bg-zinc-50 text-[10px] font-medium capitalize text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500"
                             >
-                              {src.status}
+                              {stepItem.status}
                             </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                          </td>
+              {/* =================================================
+                  DATASET
+              ================================================= */}
+              {activeTab === "dataset" && (
+                <div className="space-y-4">
 
-                          <td className="px-5 py-4 text-sm text-zinc-400">
-                            {src.recordsExtracted.toLocaleString()}
-                          </td>
+                  {/* Dataset Toolbar */}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                    <div className="relative w-full sm:w-80">
+                      <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400 dark:text-zinc-600" />
+
+                      <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search dataset records..."
+                        className="h-9 rounded-lg border-zinc-200 bg-white pl-9 text-xs text-zinc-800 shadow-none placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-0 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:placeholder:text-zinc-700 dark:focus:border-zinc-600"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDeduplicate}
+                        disabled={deduping}
+                        className="h-9 cursor-pointer rounded-lg border-zinc-200 bg-white text-xs text-zinc-500 shadow-none hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                      >
+                        <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
+
+                        {deduping ? "Processing..." : "Deduplicate"}
+                      </Button>
+
+                      <a
+                        href={api.getExportUrl(workflow.id, "xlsx")}
+                        download
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 rounded-lg cursor-pointer border-zinc-200 bg-white text-xs text-zinc-600 shadow-none hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                        >
+                          <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                          Excel
+                        </Button>
+                      </a>
+
+                      <a
+                        href={api.getExportUrl(workflow.id, "csv")}
+                        download
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 rounded-lg cursor-pointer  border-zinc-200 bg-white text-xs text-zinc-500 shadow-none hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                        >
+                          <Download className="mr-1.5 h-3.5 w-3.5" />
+                          CSV
+                        </Button>
+                      </a>
+
+                      <a
+                        href={api.getExportUrl(workflow.id, "json")}
+                        download
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 rounded-lg cursor-pointer  border-zinc-200 bg-white text-xs text-zinc-500 shadow-none hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+                        >
+                          <Download className="mr-1.5 h-3.5 w-3.5" />
+                          JSON
+                        </Button>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Dataset Card */}
+                  <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+
+                    <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                        <div>
+                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                            Dataset Records
+                          </p>
+
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
+                            {records
+                              .filter((rec) => {
+                                if (!searchQuery.trim()) return true;
+
+                                const q = searchQuery.toLowerCase().trim();
+                                const d = rec.data || {};
+
+                                return (
+                                  JSON.stringify(d)
+                                    .toLowerCase()
+                                    .includes(q) ||
+                                  (rec.source || "")
+                                    .toLowerCase()
+                                    .includes(q)
+                                );
+                              })
+                              .length.toLocaleString()}{" "}
+                            {searchQuery ? "matching" : ""} records collected &
+                            validated
+                          </p>
+                        </div>
+
+                        {/* View Toggle */}
+                        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 dark:border-zinc-800 dark:bg-zinc-900">
+
+                          <button
+                            type="button"
+                            onClick={() => setViewFormat("ui")}
+                            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                              viewFormat === "ui"
+                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+                                : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+                            }`}
+                          >
+                            <Table className="h-3.5 w-3.5" />
+                            UI List
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setViewFormat("json")}
+                            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                              viewFormat === "json"
+                                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+                                : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+                            }`}
+                          >
+                            <Code2 className="h-3.5 w-3.5" />
+                            Raw JSON
+                          </button>
+
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-0">
+                      {(() => {
+                        const filteredRecords = records.filter((rec) => {
+                          if (!searchQuery.trim()) return true;
+
+                          const q = searchQuery.toLowerCase().trim();
+                          const d = rec.data || {};
+
+                          return (
+                            JSON.stringify(d).toLowerCase().includes(q) ||
+                            (rec.source || "").toLowerCase().includes(q)
+                          );
+                        });
+
+                        if (filteredRecords.length > 0) {
+                          return viewFormat === "ui" ? (
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse text-left">
+
+                                <thead>
+                                  <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-500">
+                                    <th className="px-4 py-3">#</th>
+                                    <th className="px-4 py-3">Title / Role</th>
+                                    <th className="px-4 py-3">Company / Org</th>
+                                    <th className="px-4 py-3">Location</th>
+                                    <th className="px-4 py-3">
+                                      Details / Salary
+                                    </th>
+                                    <th className="px-4 py-3">
+                                      Social & Profiles
+                                    </th>
+                                    <th className="px-4 py-3 text-right">
+                                      Action
+                                    </th>
+                                  </tr>
+                                </thead>
+
+                                <tbody className="divide-y divide-zinc-200 text-xs dark:divide-zinc-800/70">
+                                  {filteredRecords.map((rec, idx) => {
+                                    const d = (rec.data || {}) as Record<
+                                      string,
+                                      any
+                                    >;
+
+                                    const title = String(
+                                      d.job_title ||
+                                        d.company_name ||
+                                        d.title ||
+                                        d.name ||
+                                        `Item ${idx + 1}`
+                                    );
+
+                                    const org = String(
+                                      d.company ||
+                                        d.organization ||
+                                        d.category ||
+                                        d.industry ||
+                                        "—"
+                                    );
+
+                                    const loc = String(
+                                      d.location ||
+                                        d.headquarters ||
+                                        "—"
+                                    );
+
+                                    const details = String(
+                                      d.salary_range
+                                        ? `${d.salary_range} • ${
+                                            d.tech_stack || ""
+                                          }`
+                                        : d.funding_raised ||
+                                            d.key_skills ||
+                                            d.key_attributes ||
+                                            d.description ||
+                                            "—"
+                                    );
+
+                                    const link = String(
+                                      d.apply_url ||
+                                        d.website ||
+                                        rec.source ||
+                                        "#"
+                                    );
+
+                                    return (
+                                      <tr
+                                        key={rec.id || idx}
+                                        className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/40"
+                                      >
+                                        <td className="px-4 py-3 font-mono text-[11px] text-zinc-400 dark:text-zinc-600">
+                                          {idx + 1}
+                                        </td>
+
+                                        <td className="max-w-xs truncate px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                                          {title}
+                                        </td>
+
+                                        <td className="px-4 py-3 font-medium text-zinc-700 dark:text-zinc-300">
+                                          {org}
+                                        </td>
+
+                                        <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                                          {loc}
+                                        </td>
+
+                                        <td
+                                          className="max-w-xs truncate px-4 py-3 text-zinc-500 dark:text-zinc-400"
+                                          title={details}
+                                        >
+                                          {details}
+                                        </td>
+
+                                        <td className="px-4 py-3">
+                                          <div className="flex max-w-xs flex-wrap items-center gap-1.5">
+
+                                            {d.linkedin && (
+                                              <a
+                                                href={d.linkedin}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                                              >
+                                                <span>LinkedIn</span>
+                                                <ExternalLink className="h-2.5 w-2.5" />
+                                              </a>
+                                            )}
+
+                                            {d.github && (
+                                              <a
+                                                href={d.github}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                                              >
+                                                <span>GitHub</span>
+                                                <ExternalLink className="h-2.5 w-2.5" />
+                                              </a>
+                                            )}
+
+                                            {d.twitter && (
+                                              <a
+                                                href={d.twitter}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                                              >
+                                                <span>X / Twitter</span>
+                                                <ExternalLink className="h-2.5 w-2.5" />
+                                              </a>
+                                            )}
+
+                                            {d.contact_email &&
+                                              !d.linkedin &&
+                                              !d.github && (
+                                                <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                                                  {d.contact_email}
+                                                </span>
+                                              )}
+
+                                            {!d.linkedin &&
+                                              !d.github &&
+                                              !d.twitter &&
+                                              !d.contact_email && (
+                                                <span className="text-zinc-400 dark:text-zinc-700">
+                                                  —
+                                                </span>
+                                              )}
+                                          </div>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-right">
+                                          <a
+                                            href={link}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                                          >
+                                            <span>
+                                              {d.apply_url
+                                                ? "Apply"
+                                                : "Source Link"}
+                                            </span>
+
+                                            <ExternalLink className="h-3 w-3" />
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <pre className="max-h-[600px] overflow-auto bg-zinc-950 p-4 font-mono text-[11px] leading-5 text-zinc-400 dark:bg-black">
+                              {JSON.stringify(filteredRecords, null, 2)}
+                            </pre>
+                          );
+                        }
+
+                        return (
+                          <div className="py-16 text-center">
+                            <Database className="mx-auto mb-3 h-5 w-5 text-zinc-400 dark:text-zinc-700" />
+
+                            <p className="text-sm text-zinc-500">
+                              {searchQuery
+                                ? `No records matching "${searchQuery}"`
+                                : "No dataset records"}
+                            </p>
+
+                            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-700">
+                              {searchQuery
+                                ? "Try searching for a different keyword."
+                                : "Records collected by this workflow will appear here."}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* =================================================
+                  SOURCE LINEAGE
+              ================================================= */}
+              {activeTab === "sources" && (
+                <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+
+                  <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                        Source lineage
+                      </p>
+
+                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
+                        URL provenance and extraction metrics.
+                      </p>
+                    </div>
+
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                      <Globe className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-600" />
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[700px] text-left">
+
+                      <thead>
+                        <tr className="border-b border-zinc-200 dark:border-zinc-800">
+
+                          <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                            Source
+                          </th>
+
+                          <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                            Domain
+                          </th>
+
+                          <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                            Status
+                          </th>
+
+                          <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                            Records
+                          </th>
 
                         </tr>
+                      </thead>
 
-                      ))
+                      <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/70">
 
-                    ) : (
+                        {sources.length > 0 ? (
+                          sources.map((src, idx) => (
+                            <tr
+                              key={idx}
+                              className="group transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+                            >
 
-                      <tr>
+                              <td className="px-5 py-4">
+                                <a
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex max-w-md items-center gap-2 font-mono text-xs text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                                >
+                                  <span className="truncate">
+                                    {src.url}
+                                  </span>
 
-                        <td
-                          colSpan={4}
-                          className="px-5 py-16 text-center"
-                        >
+                                  <ExternalLink className="h-3 w-3 shrink-0 text-zinc-400 dark:text-zinc-700" />
+                                </a>
+                              </td>
 
-                          <Globe className="mx-auto mb-3 h-5 w-5 text-zinc-700" />
+                              <td className="px-5 py-4 font-mono text-xs text-zinc-500 dark:text-zinc-600">
+                                {src.domain}
+                              </td>
 
-                          <p className="text-sm text-zinc-500">
-                            No sources found
-                          </p>
+                              <td className="px-5 py-4">
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full border-zinc-200 bg-zinc-50 text-[10px] font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400"
+                                >
+                                  {src.status}
+                                </Badge>
+                              </td>
 
-                          <p className="mt-1 text-xs text-zinc-700">
-                            Source URLs will appear here after discovery.
-                          </p>
+                              <td className="px-5 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                                {src.recordsExtracted.toLocaleString()}
+                              </td>
 
-                        </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="px-5 py-16 text-center">
 
-                      </tr>
+                              <Globe className="mx-auto mb-3 h-5 w-5 text-zinc-400 dark:text-zinc-700" />
 
-                    )}
+                              <p className="text-sm text-zinc-500">
+                                No sources found
+                              </p>
 
-                  </tbody>
+                              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-700">
+                                Source URLs will appear here after discovery.
+                              </p>
 
-                </table>
+                            </td>
+                          </tr>
+                        )}
 
-              </div>
-
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-
-            </div>
-          )}
-
         </div>
       </div>
     </AppLayout>
   );
 }
 
-// tab button 
+/* =========================================================
+   TAB BUTTON
+========================================================= */
 
 function TabButton({
   active,
@@ -921,14 +1120,15 @@ function TabButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`
         relative flex shrink-0 items-center gap-2 px-3 pb-3 pt-1
         text-xs font-medium transition-colors
         ${
           active
-            ? "text-white"
-            : "text-zinc-600 hover:text-zinc-300"
+            ? "text-zinc-950 dark:text-white"
+            : "text-zinc-400 hover:text-zinc-800 dark:text-zinc-600 dark:hover:text-zinc-300"
         }
       `}
     >
@@ -937,9 +1137,10 @@ function TabButton({
       {children}
 
       {active && (
-        <span className="absolute bottom-0 left-2 right-2 h-px bg-white" />
+        <span className="absolute bottom-0 left-2 right-2 h-px bg-zinc-950 dark:bg-white" />
       )}
     </button>
   );
 }
+
 
