@@ -115,7 +115,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="h-10 rounded-md px-2.5 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+                className="h-10 cursor-pointer rounded-md px-2.5 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
               >
                 <LogOut className="mr-1.5 h-3.5 w-3.5" />
                 Sign out
