@@ -30,6 +30,11 @@ app.use(
   })
 );
 
+// Better Auth MUST be mounted BEFORE express.json() body parser.
+// Body parsers consume the request stream, preventing Better Auth from
+// reading the request body for OAuth callbacks, sign-in, sign-up, etc.
+app.all('/api/auth/*', toNodeHandler(auth));
+
 app.use(express.json());
 
 // Attach parsed cookies to request object.
@@ -37,9 +42,6 @@ app.use((req, _res, next) => {
   req.cookies = parseCookies(req);
   next();
 });
-
-// Better Auth API route handler for authentication endpoints.
-app.all('/api/auth/*', toNodeHandler(auth));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
