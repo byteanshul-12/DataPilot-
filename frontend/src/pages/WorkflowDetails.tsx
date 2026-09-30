@@ -278,13 +278,17 @@ export default function WorkflowDetails() {
 
                 {/* Scanning Animation */}
                 <div className="relative mx-auto mb-7 flex h-24 w-24 items-center justify-center">
+  {/* Outer animated ring */}
+  <div className="absolute inset-0 rounded-full border border-zinc-300 opacity-30 animate-ping dark:border-zinc-700" />
 
-                  <div className="absolute inset-0 rounded-full border border-zinc-300 opacity-30 animate-ping dark:border-zinc-700" />
+  {/* Inner animated ring */}
+  <div className="absolute inset-3 rounded-full border border-zinc-300/70 animate-pulse dark:border-zinc-700/70" />
 
-                  <div className="absolute inset-3 rounded-full border border-zinc-300/70 animate-pulse dark:border-zinc-700/70" />
-
-                  
-                </div>
+  {/* Center */}
+  <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-zinc-300 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-zinc-900 dark:bg-zinc-100" />
+  </div>
+</div>
 
                 {/* Status */}
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
