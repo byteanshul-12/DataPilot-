@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import { v1Router } from './api/v1/index.js';
 import { parseCookies } from './auth/cookie.js';
 import { initDatabase } from './db/migrate.js';
+import { startKeepAlive } from './services/keepAlive.js';
 
 const app = express();
 
@@ -68,4 +69,5 @@ await initDatabase();
 
 app.listen(Number(env.PORT), () => {
   console.log(`Backend server running on port ${env.PORT}`);
+  startKeepAlive(); // Keep AI microservice warm to avoid Render free-tier cold starts
 });
