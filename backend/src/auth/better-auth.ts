@@ -31,6 +31,13 @@ export const auth = betterAuth({
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production',
     },
+    // Extend OAuth state cookie to 10 minutes so it survives Render cold-start
+    // boot times (default is 5 minutes which can expire during a cold start).
+    cookiePrefix: 'better-auth',
+  },
+  // Redirect auth errors to the frontend sign-in page instead of the backend root
+  onAPIError: {
+    errorURL: `${process.env.FRONTEND_URL || 'https://datapilot-frontend-e6gi.onrender.com'}/auth/sign-in`,
   },
   emailAndPassword: {
     enabled: true,

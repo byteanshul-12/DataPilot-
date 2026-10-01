@@ -48,15 +48,24 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Redirect root and any non-API browser navigation directly to the frontend web app
+// Redirect root and any non-API browser navigation to the frontend.
+// If Better Auth sends an error (e.g. ?error=state_not_found after an OAuth
+// cold-start failure), forward the user to the sign-in page so they can retry
+// instead of landing silently on the marketing page.
 app.get('/', (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL || 'https://datapilot-frontend-e6gi.onrender.com';
-  const queryString = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-  res.redirect(`${frontendUrl}${queryString}`);
+  const hasError = req.query.error;
+  if (hasError) {
+    // Auth error — send to sign-in so the user can try again
+    return res.redirect(`${frontendUrl}/auth/sign-in?error=${encodeURIComponent(String(req.query.error))}`);
+  }
+  res.redirect(frontendUrl);
 });
 
 app.use('/api/v1', v1Router);
 
+// Catch-all: redirect any other unknown browser paths to the frontend SPA.
+// Skip actual API and health paths to avoid masking 404 errors.
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
     return next();
