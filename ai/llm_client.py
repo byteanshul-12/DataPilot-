@@ -193,6 +193,7 @@ async def classify_intent(prompt: str) -> dict:
             "keywords": []
         }
 
+    has_scrape_kw = any(act in prompt_lower for act in ["scrape", "extract", "collect", "gather", "find", "search", "dataset", "excel", "csv"])
     plan_triggers = ["give me a plan", "create a plan", "workflow plan", "how to collect", "data strategy", "plan for"]
     if any(tr in prompt_lower for tr in plan_triggers) and not has_scrape_kw:
         return {
