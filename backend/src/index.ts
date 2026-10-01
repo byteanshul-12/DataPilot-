@@ -47,7 +47,22 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
+// Redirect root and any non-API browser navigation directly to the frontend web app
+app.get('/', (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'https://datapilot-frontend-e6gi.onrender.com';
+  const queryString = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(`${frontendUrl}${queryString}`);
+});
+
 app.use('/api/v1', v1Router);
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+    return next();
+  }
+  const frontendUrl = process.env.FRONTEND_URL || 'https://datapilot-frontend-e6gi.onrender.com';
+  res.redirect(`${frontendUrl}${req.originalUrl}`);
+});
 
 await initDatabase();
 
