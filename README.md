@@ -2,11 +2,11 @@
 
 AI-powered data intelligence platform for natural language data collection workflows.
 
-🚀 **Live Demo:** [https://datapilot-frontend-e6gi.onrender.com](https://datapilot-frontend-e6gi.onrender.com)
+**Live Demo:** [https://datapilot-frontend-e6gi.onrender.com](https://datapilot-frontend-e6gi.onrender.com)
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 DataPilot is architected as a decoupled microservices-based system designed for asynchronous, AI-driven web scraping and data extraction.
 
@@ -78,7 +78,7 @@ flowchart TD
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 .
@@ -91,7 +91,7 @@ flowchart TD
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Zustand, Recharts
 - **Backend:** Node.js, Express, TypeScript, Zod, BullMQ, Redis
@@ -101,7 +101,7 @@ flowchart TD
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - Node.js (v18+)
