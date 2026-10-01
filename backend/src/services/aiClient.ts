@@ -44,15 +44,31 @@ export async function executeAIWorkflow(taskId: string, prompt: string): Promise
     }
   } catch (e) {}
 
-  const url = `${baseUrl.replace(/\/$/, '')}/api/v1/execute`;
+  const base = baseUrl.replace(/\/$/, '');
+  const url = `${base}/api/v1/execute`;
+
+  // Pre-warm: ping /health first to wake the AI service from cold start before sending the real request.
+  // On Render free tier the service can take 50-90 seconds to boot, which would otherwise burn through
+  // the main request timeout before execution even begins.
+  try {
+    console.log(`[AIClient] Pre-warming AI service at: ${base}/health`);
+    await fetch(`${base}/health`, {
+      signal: AbortSignal.timeout(90000), // allow up to 90s for cold boot
+    });
+    console.log(`[AIClient] AI service warm — proceeding with workflow.`);
+  } catch (warmErr) {
+    console.warn(`[AIClient] Pre-warm ping failed (service may still be booting): ${warmErr}`);
+    // Don't abort — try the main call anyway
+  }
+
   console.log(`[AIClient] Calling AI engine for taskId=${taskId} at: ${url}`);
 
-  try {
+  const attemptCall = async (): Promise<AIExecutionResult> => {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ taskId, prompt }),
-      signal: AbortSignal.timeout(120000), // 2 min timeout for cold starts
+      signal: AbortSignal.timeout(300000), // 5 min timeout — covers cold start + execution
     });
 
     if (!response.ok) {
@@ -60,22 +76,32 @@ export async function executeAIWorkflow(taskId: string, prompt: string): Promise
       throw new Error(`AI service responded with status ${response.status}: ${errText}`);
     }
 
-    const data = (await response.json()) as AIExecutionResult;
-    return data;
-  } catch (err) {
-    console.error(`Error executing AI workflow for taskId=${taskId}:`, err);
-    return {
-      taskId,
-      status: 'failed',
-      progress: 100,
-      aiResponse: `Workflow execution error: ${err instanceof Error ? err.message : String(err)}`,
-      planResponse: undefined,
-      executionSteps: [
-        { step: 'intent_parsing', status: 'completed' },
-        { step: 'execution', status: 'failed' },
-      ],
-      records: [],
-      sources: [],
-    };
+    return (await response.json()) as AIExecutionResult;
+  };
+
+  try {
+    return await attemptCall();
+  } catch (firstErr) {
+    console.warn(`[AIClient] First attempt failed for taskId=${taskId}: ${firstErr}. Retrying in 5s...`);
+    // One retry after a short delay — handles transient cold-start failures
+    await new Promise((r) => setTimeout(r, 5000));
+    try {
+      return await attemptCall();
+    } catch (err) {
+      console.error(`Error executing AI workflow for taskId=${taskId}:`, err);
+      return {
+        taskId,
+        status: 'failed',
+        progress: 100,
+        aiResponse: `Workflow execution error: ${err instanceof Error ? err.message : String(err)}`,
+        planResponse: undefined,
+        executionSteps: [
+          { step: 'intent_parsing', status: 'completed' },
+          { step: 'execution', status: 'failed' },
+        ],
+        records: [],
+        sources: [],
+      };
+    }
   }
 }
