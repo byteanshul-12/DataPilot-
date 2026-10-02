@@ -660,17 +660,6 @@ nav {
                                     <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
                                     <span class="ml-2 font-mono text-xs text-gray-400">datapilot-orchestrator // pipeline-runner</span>
                                 </div>
-                                <div class="flex items-center gap-4 text-[11px] font-mono">
-                                    <span class="flex items-center gap-1.5 text-emerald-400">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        <span id="backend-status">API: Online</span>
-                                    </span>
-                                    <span class="text-white/20">•</span>
-                                    <span class="flex items-center gap-1.5 text-cyan-400">
-                                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                                        <span id="ai-status">AI: Ready</span>
-                                    </span>
-                                </div>
                             </div>
 
                             <!-- Interactive Prompt Form -->
@@ -2542,24 +2531,6 @@ nav {
                     }
                 });
             }
-
-            // Real-time Health Check to Backend API & AI Microservice
-            const backendOrigin = window.location.hostname.includes('onrender.com')
-                ? 'https://datapilot-backend-zywi.onrender.com'
-                : 'http://localhost:8000';
-
-            fetch(`${backendOrigin}/health`)
-                .then(r => r.json())
-                .then(d => {
-                    const bEl = document.getElementById('backend-status');
-                    if (bEl && d.status === 'healthy') {
-                        bEl.textContent = 'API: Online';
-                    }
-                })
-                .catch(() => {
-                    const bEl = document.getElementById('backend-status');
-                    if (bEl) bEl.textContent = 'API: Connecting...';
-                });
 
             // Check if user is already logged in (via localStorage guest or session)
             try {
