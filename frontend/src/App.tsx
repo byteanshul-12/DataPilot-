@@ -11,7 +11,6 @@ import Workflows from "./pages/Workflows";
 import WorkflowDetails from "./pages/WorkflowDetails";
 import LandingPage from "./pages/LandingPage";
 import { Providers } from "@/components/providers";
-import { ThemeProvider } from "@/components/theme-provider";
 
 const queryClient = new QueryClient();
 
@@ -31,13 +30,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="datapilot-theme">
-        <Router>
-          <Providers>
-            <AppRoutes />
-          </Providers>
-        </Router>
-      </ThemeProvider>
+      <Router>
+        <Providers>
+          <AppRoutes />
+        </Providers>
+      </Router>
     </QueryClientProvider>
   );
 }

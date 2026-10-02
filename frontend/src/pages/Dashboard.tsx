@@ -252,9 +252,13 @@ export default function Dashboard() {
               <div className="mx-auto max-w-3xl">
 
                 <div className="mb-7 text-center">
-                  <h2 className="text-4xl font-semibold tracking-tight text-zinc-900 dark:text-white mt-15 mb-15">
+                  
+
+                  <h2 className="text-4xl font-semibold tracking-tight text-white mt-15 mb-15 text-shadow-lg shadow-blue-500/50">
                     Collect Datas Easier Then Before
                   </h2>
+
+                  
                 </div>
 
                 <form ref={formRef} onSubmit={handleCreateTask} onKeyDown={handleKeyDown}>
@@ -263,10 +267,10 @@ export default function Dashboard() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`relative overflow-hidden rounded-xl border transition-all ${
+                    className={`relative overflow-hidden rounded-xl border bg-black transition-all ${
                       isDragging
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 shadow-lg ring-1 ring-emerald-500"
-                        : "border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-black focus-within:border-zinc-400 dark:focus-within:border-zinc-600"
+                        ? "border-emerald-500 bg-emerald-950/20 shadow-lg shadow-emerald-950/20 ring-1 ring-emerald-500"
+                        : "border-zinc-800 focus-within:border-zinc-600"
                     }`}
                   >
 
@@ -324,11 +328,11 @@ export default function Dashboard() {
                           ? `Ask anything about ${attachedFile.name} (e.g. extract contacts, parse tables) or hit Enter to run...`
                           : "e.g. Find the top 20 SaaS companies in India and collect their pricing, website, and funding information..."
                       }
-                      className="min-h-[100px] resize-none border-0 bg-transparent px-4 py-4 text-sm text-zinc-900 placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 focus-visible:ring-0"
+                      className="min-h-[100px] resize-none border-0 bg-transparent px-4 py-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-0"
                     />
 
                     {isDragging && (
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-xs">
                         <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
                           <Paperclip className="h-4 w-4 animate-bounce" />
                           <span>Drop your PDF, Photo, or file here</span>
@@ -336,7 +340,7 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/80 px-3 py-2.5 bg-zinc-50/50 dark:bg-transparent">
+                    <div className="flex items-center justify-between border-t border-zinc-800/80 px-3 py-2.5">
 
                       <div className="flex items-center gap-2">
                         <input
@@ -352,19 +356,19 @@ export default function Dashboard() {
                           variant="ghost"
                           size="sm"
                           onClick={() => fileInputRef.current?.click()}
-                          className="h-8 gap-1.5 rounded-md px-2.5 text-xs text-zinc-600 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors"
+                          className="h-8 gap-1.5 rounded-md px-2.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors"
                           title="Attach PDF, Photo, or File"
                         >
                           <Paperclip className="h-3.5 w-3.5" />
                           <span className="text-xs">Attach file</span>
                         </Button>
 
-                        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 hidden sm:inline-flex items-center gap-1">
-                          Press <kbd className="rounded border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 px-1 py-0.5 font-mono text-[10px] text-zinc-700 dark:text-zinc-300">{isMac ? "Return ↵" : "Enter ↵"}</kbd>
+                        <span className="text-[11px] text-zinc-500 hidden sm:inline-flex items-center gap-1">
+                          Press <kbd className="rounded border border-zinc-800 bg-zinc-900 px-1 py-0.5 font-mono text-[10px] text-zinc-300">{isMac ? "Return ↵" : "Enter ↵"}</kbd>
                           {isMac && (
                             <>
                               {" or "}
-                              <kbd className="rounded border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 px-1 py-0.5 font-mono text-[10px] text-zinc-700 dark:text-zinc-300">⌘ Return</kbd>
+                              <kbd className="rounded border border-zinc-800 bg-zinc-900 px-1 py-0.5 font-mono text-[10px] text-zinc-300">⌘ Return</kbd>
                             </>
                           )}
                           {" to run"}
@@ -374,7 +378,7 @@ export default function Dashboard() {
                       <Button
                         type="submit"
                         disabled={loading || (!prompt.trim() && !attachedFile)}
-                        className="ml-auto h-9 rounded-md bg-zinc-900 px-4 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 transition-colors"
+                        className="ml-auto h-9 rounded-md bg-white px-4 text-xs font-medium text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 transition-colors"
                       >
                         {loading ? (
                           <>
@@ -400,12 +404,12 @@ export default function Dashboard() {
           {/* stats  */}
           <section>
             <div className="mb-4">
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-600">
                 Overview
               </p>
             </div>
 
-            <div className="grid grid-cols-1 divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-none sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+            <div className="grid grid-cols-1 divide-y divide-zinc-800 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
 
               <MetricCard
                 title="Total Workflows"
@@ -443,11 +447,11 @@ export default function Dashboard() {
           <section>
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+                <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-600">
                   Activity
                 </p>
 
-                <h2 className="mt-1 text-lg font-medium text-zinc-900 dark:text-white">
+                <h2 className="mt-1 text-lg font-medium text-white">
                   Recent workflows
                 </h2>
               </div>
@@ -456,38 +460,38 @@ export default function Dashboard() {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/workflows")}
-                className="text-xs text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white"
+                className="text-xs text-zinc-500 hover:bg-zinc-900 hover:text-white"
               >
                 View all
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Button>
             </div>
 
-            <Card className="overflow-hidden rounded-lg border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-none">
+            <Card className="overflow-hidden rounded-lg border-zinc-800 bg-zinc-950 shadow-none">
 
               <CardContent className="p-0">
 
                 {stats?.recentActivity &&
                 stats.recentActivity.length > 0 ? (
-                  <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  <div className="divide-y divide-zinc-800">
 
                     {stats.recentActivity.map((activity) => (
                       <div
                         key={activity.id}
-                        className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60"
+                        className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-zinc-900/60"
                       >
                         <div className="flex min-w-0 items-center gap-4">
 
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
-                            <Layers className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400" />
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900">
+                            <Layers className="h-3.5 w-3.5 text-zinc-500" />
                           </div>
 
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                            <p className="truncate text-sm font-medium text-zinc-200">
                               {activity.title}
                             </p>
 
-                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                            <p className="mt-1 text-xs text-zinc-600">
                               {activity.timestamp}
                             </p>
                           </div>
@@ -496,7 +500,7 @@ export default function Dashboard() {
 
                         <Badge
                           variant="outline"
-                          className="ml-4 shrink-0 border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-transparent dark:text-zinc-400 text-xs font-normal"
+                          className="ml-4 shrink-0 border-zinc-800 bg-transparent text-xs font-normal text-zinc-500"
                         >
                           {activity.status}
                         </Badge>
@@ -508,11 +512,13 @@ export default function Dashboard() {
                 ) : (
                   <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
 
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    
+
+                    <p className="text-sm text-zinc-400">
                       No workflows yet
                     </p>
 
-                    <p className="mt-1 max-w-sm text-xs text-zinc-500 dark:text-zinc-600">
+                    <p className="mt-1 max-w-sm text-xs text-zinc-600">
                       Launch a workflow above and your recent activity will
                       appear here.
                     </p>
@@ -544,17 +550,17 @@ function MetricCard({
   highlight?: boolean;
 }) {
   return (
-    <div className="group px-5 py-5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+    <div className="group px-5 py-5 transition-colors hover:bg-zinc-900/50">
 
       <div className="flex items-center justify-between">
 
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs text-zinc-500">
           {title}
         </span>
 
         <Icon
           className={`h-3.5 w-3.5 ${
-            highlight ? "text-emerald-500" : "text-zinc-400 dark:text-zinc-700"
+            highlight ? "text-emerald-500" : "text-zinc-700"
           }`}
         />
 
@@ -562,11 +568,11 @@ function MetricCard({
 
       <div className="mt-4">
 
-        <div className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
+        <div className="text-2xl font-semibold tracking-tight text-white">
           {value.toLocaleString()}
         </div>
 
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-600">
           {description}
         </p>
 

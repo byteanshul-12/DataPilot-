@@ -543,16 +543,6 @@ nav {
 
             <div class="flex items-center gap-4">
 
-                <button
-                    id="landing-theme-toggle"
-                    type="button"
-                    class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center"
-                    title="Toggle theme"
-                    aria-label="Toggle theme"
-                >
-                    <svg id="theme-icon-sun" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                    <svg id="theme-icon-moon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                </button>
 
                 <a
                     id="nav-login-btn"
@@ -2467,7 +2457,7 @@ nav {
             }
         );
 
-        /* LANDING PAGE UTILS & THEME TOGGLE */
+        /* LANDING PAGE UTILS */
         (function() {
             // Check if user is already logged in (via localStorage guest or session)
             try {
@@ -2476,41 +2466,6 @@ nav {
                     if (navAppBtn) navAppBtn.textContent = 'Open Dashboard';
                 }
             } catch (e) {}
-
-            // Landing Page Theme Toggle
-            const themeBtn = document.getElementById('landing-theme-toggle');
-            const sunIcon = document.getElementById('theme-icon-sun');
-            const moonIcon = document.getElementById('theme-icon-moon');
-
-            function applyLandingTheme(t) {
-                if (t === 'light') {
-                    if (sunIcon) sunIcon.classList.remove('hidden');
-                    if (moonIcon) moonIcon.classList.add('hidden');
-                    document.documentElement.classList.add('light');
-                    document.documentElement.classList.remove('dark');
-                } else {
-                    if (sunIcon) sunIcon.classList.add('hidden');
-                    if (moonIcon) moonIcon.classList.remove('hidden');
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
-                }
-            }
-
-            try {
-                const savedTheme = localStorage.getItem('datapilot-theme') || 'dark';
-                applyLandingTheme(savedTheme);
-            } catch (e) {}
-
-            if (themeBtn) {
-                themeBtn.addEventListener('click', () => {
-                    const isDark = document.documentElement.classList.contains('dark');
-                    const next = isDark ? 'light' : 'dark';
-                    try {
-                        localStorage.setItem('datapilot-theme', next);
-                    } catch (e) {}
-                    applyLandingTheme(next);
-                });
-            }
         })();
 
     </script>
