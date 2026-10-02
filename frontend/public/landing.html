@@ -544,17 +544,19 @@ nav {
             <div class="flex items-center gap-5">
 
                 <a
+                    id="nav-login-btn"
                     href="/auth/sign-in"
-                    class=" hidden sm:block text-sm font-mono tracking-[.15em] text-gray-500 hover:text-white transition-colors"
+                    class="hidden sm:block text-sm font-mono tracking-[.15em] text-gray-500 hover:text-white transition-colors"
                 >
                     LOGIN
                 </a>
 
                 <a
-                    href="/auth/sign-up"
-                    class="btn-magnetic bg-white text-sm text-black px-5 py-2.5 text-[10px] font-semibold tracking-[.15em] uppercase  transition-colors"
+                    id="nav-app-btn"
+                    href="/dashboard"
+                    class="btn-magnetic bg-white text-sm text-black px-5 py-2.5 text-[10px] font-semibold tracking-[.15em] uppercase transition-colors"
                 >
-                    Get Started
+                    Launch App
                 </a>
 
             </div>
@@ -627,27 +629,83 @@ nav {
                             </p>
 
 
-                            <div class="hero-item flex gap-3 justify-center">
-
+                            <div class="hero-item flex flex-wrap gap-4 justify-center items-center">
                                 <a
-                                    href="/auth/sign-up"
+                                    href="/dashboard"
                                     class="btn-magnetic bg-accent text-white px-7 py-4 text-xs font-semibold uppercase tracking-[.15em]"
                                     style="color: #ffffff !important;"
                                 >
-                                    Start Researching
+                                    Open Dashboard
                                 </a>
-
+                                <a
+                                    href="/auth/sign-in"
+                                    class="btn-magnetic border border-white/20 text-white px-7 py-4 text-xs font-semibold uppercase tracking-[.15em] hover:bg-white hover:text-black transition-colors"
+                                >
+                                    Sign In
+                                </a>
                             </div>
 
                         </div>
 
                     </div>
 
+                    <!-- HERO TERMINAL & INTERACTIVE PIPELINE RUNNER -->
+                    <div class="hero-item w-full max-w-4xl mx-auto -mt-4 text-left">
+                        <div class="bg-[#0b0b0b]/90 border border-white/10 rounded-2xl p-5 shadow-2xl backdrop-blur-2xl">
+                            <!-- Terminal Header -->
+                            <div class="flex items-center justify-between pb-3 mb-4 border-b border-white/5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                                    <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                                    <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                                    <span class="ml-2 font-mono text-xs text-gray-400">datapilot-orchestrator // pipeline-runner</span>
+                                </div>
+                                <div class="flex items-center gap-4 text-[11px] font-mono">
+                                    <span class="flex items-center gap-1.5 text-emerald-400">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span id="backend-status">API: Online</span>
+                                    </span>
+                                    <span class="text-white/20">•</span>
+                                    <span class="flex items-center gap-1.5 text-cyan-400">
+                                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                                        <span id="ai-status">AI: Ready</span>
+                                    </span>
+                                </div>
+                            </div>
 
-                    <!-- HERO TERMINAL -->
+                            <!-- Interactive Prompt Form -->
+                            <form id="hero-prompt-form" class="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#141414] border border-white/10 rounded-xl p-2 focus-within:border-white/40 focus-within:ring-1 focus-within:ring-white/20 transition-all">
+                                <div class="pl-3 pr-1 text-gray-400 font-mono text-sm select-none hidden sm:block">❯</div>
+                                <input
+                                    id="hero-prompt-input"
+                                    type="text"
+                                    placeholder="Enter query, e.g. 'Find top 10 AI startups in San Francisco with websites and founders'..."
+                                    class="w-full bg-transparent text-white text-sm font-light placeholder:text-gray-500 focus:outline-none px-3 py-2"
+                                />
+                                <button
+                                    type="submit"
+                                    class="shrink-0 flex items-center justify-center gap-2 bg-white hover:bg-gray-200 text-black px-5 py-3 rounded-lg text-xs font-semibold uppercase tracking-[.1em] transition-colors cursor-pointer shadow-md"
+                                >
+                                    <span>Run AI Pipeline</span>
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </button>
+                            </form>
 
-               
-                </div>
+                            <!-- Suggested Prompts / Chips -->
+                            <div class="flex flex-wrap items-center gap-2 mt-3 pt-2 text-[11px] font-mono text-gray-400">
+                                <span class="text-gray-600">Sample Prompts:</span>
+                                <button type="button" class="sample-prompt-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 transition-colors cursor-pointer border border-white/5">
+                                    Top 5 AI Startups SF
+                                </button>
+                                <button type="button" class="sample-prompt-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 transition-colors cursor-pointer border border-white/5">
+                                    Senior Backend Developer Roles
+                                </button>
+                                <button type="button" class="sample-prompt-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 transition-colors cursor-pointer border border-white/5">
+                                    Leading SaaS Competitor Analysis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
             </div>
 
@@ -1313,11 +1371,11 @@ nav {
 
                 <div class="mt-12 flex justify-center">
                     <a
-                        href="/auth/sign-up"
+                        href="/dashboard"
                         class="btn-magnetic bg-accent text-white px-7 py-4 text-xs font-semibold uppercase tracking-[.15em]"
                         style="color: #ffffff !important;"
                     >
-                        Get Started
+                        Try Pipeline Now
                     </a>
                 </div>
 
@@ -1932,11 +1990,11 @@ nav {
                 <div class="flex justify-center gap-4 mt-10">
 
                     <a
-                        href="/auth/sign-up"
-                        class="btn-magnetic bg-accent text-black px-9 py-4 text-xs font-semibold uppercase tracking-[.15em]"
+                        href="/dashboard"
+                        class="btn-magnetic bg-accent text-white px-9 py-4 text-xs font-semibold uppercase tracking-[.15em]"
                         style="color: #ffffff !important;"
                     >
-                        Get Started
+                        Launch App
                     </a>
 
                     <a
@@ -2453,6 +2511,64 @@ nav {
 
             }
         );
+
+        /* INTERACTIVE RUNNER & BACKEND/AI CONNECTION */
+        (function() {
+            const form = document.getElementById('hero-prompt-form');
+            const input = document.getElementById('hero-prompt-input');
+
+            // Handle sample prompt chips
+            document.querySelectorAll('.sample-prompt-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (input) {
+                        input.value = btn.textContent.trim();
+                        input.focus();
+                    }
+                });
+            });
+
+            // Handle form submission: navigate top window directly into /dashboard with prompt
+            if (form && input) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const prompt = input.value.trim();
+                    const target = prompt
+                        ? `/dashboard?prompt=${encodeURIComponent(prompt)}&autorun=true`
+                        : `/dashboard`;
+                    if (window.top) {
+                        window.top.location.href = target;
+                    } else {
+                        window.location.href = target;
+                    }
+                });
+            }
+
+            // Real-time Health Check to Backend API & AI Microservice
+            const backendOrigin = window.location.hostname.includes('onrender.com')
+                ? 'https://datapilot-backend-zywi.onrender.com'
+                : 'http://localhost:8000';
+
+            fetch(`${backendOrigin}/health`)
+                .then(r => r.json())
+                .then(d => {
+                    const bEl = document.getElementById('backend-status');
+                    if (bEl && d.status === 'healthy') {
+                        bEl.textContent = 'API: Online';
+                    }
+                })
+                .catch(() => {
+                    const bEl = document.getElementById('backend-status');
+                    if (bEl) bEl.textContent = 'API: Connecting...';
+                });
+
+            // Check if user is already logged in (via localStorage guest or session)
+            try {
+                if (localStorage.getItem('datapilot_guest_id') || document.cookie.includes('better-auth')) {
+                    const navAppBtn = document.getElementById('nav-app-btn');
+                    if (navAppBtn) navAppBtn.textContent = 'Open Dashboard';
+                }
+            } catch (e) {}
+        })();
 
     </script>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { api } from "@/lib/api";
 import { DashboardStats } from "@/types";
@@ -27,9 +27,12 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialPrompt = searchParams.get("prompt") || "";
+  const autorun = searchParams.get("autorun") === "true";
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [loading, setLoading] = useState(false);
 
   // File Upload State
@@ -52,7 +55,31 @@ export default function Dashboard() {
     /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent || navigator.platform || "");
 
   useEffect(() => {
+    // If not authenticated and no guest id, automatically establish guest session
+    if (!localStorage.getItem("datapilot_guest_id")) {
+      api.loginAsGuest().catch(() => {});
+    }
+
     api.getDashboardStats().then(setStats).catch(console.error);
+
+    // If prompt passed from landing page with autorun, execute immediately
+    if (initialPrompt && autorun) {
+      (async () => {
+        setLoading(true);
+        try {
+          if (!localStorage.getItem("datapilot_guest_id")) {
+            await api.loginAsGuest();
+          }
+          await api.createTask(initialPrompt);
+          navigate("/workflows");
+        } catch (err: any) {
+          console.error("Autorun failed", err);
+          toast.error(err?.response?.data?.message || "Failed to execute prompt from landing page");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
   }, []);
 
   const formatFileSize = (bytes: number): string => {
