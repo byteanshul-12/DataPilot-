@@ -2,7 +2,7 @@
 
 AI-powered data intelligence platform for natural language data collection workflows.
 
-**Live Demo:** [https://datapilot-frontend-e6gi.onrender.com/auth/sign-in](https://datapilot-frontend-e6gi.onrender.com/auth/sign-in)
+**Live Demo:** [https://datapilot-frontend-e6gi.onrender.com](https://datapilot-frontend-e6gi.onrender.com)
 
 ---
 
