@@ -56,15 +56,15 @@ export default function Workflows() {
 
   return (
     <AppLayout>
-      <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-black text-white">
+      <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors duration-200">
 
         {/* Background grid */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.1]"
+          className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.1]"
           style={{
             backgroundImage: `
-              linear-gradient(to right, #ffffff 1px, transparent 1px),
-              linear-gradient(to bottom, #ffffff 1px, transparent 1px)
+              linear-gradient(to right, currentColor 1px, transparent 1px),
+              linear-gradient(to bottom, currentColor 1px, transparent 1px)
             `,
             backgroundSize: "48px 48px",
           }}
@@ -76,12 +76,12 @@ export default function Workflows() {
           <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 
             <div>
-              <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-zinc-600">
+              <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
                 <Layers className="h-3.5 w-3.5" />
                 Data collection
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight text-white">
+              <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">
                 Workflows
               </h1>
 
@@ -91,7 +91,7 @@ export default function Workflows() {
             </div>
 
             {/* status filter  */}
-            <div className="flex items-center overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950 p-1">
+            <div className="flex items-center overflow-x-auto rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-950">
 
               {["all", "queued", "running", "completed", "failed"].map(
                 (status) => (
@@ -104,8 +104,8 @@ export default function Workflows() {
                       transition-colors
                       ${
                         statusFilter === status
-                          ? "bg-zinc-800 text-white"
-                          : "text-zinc-600 hover:text-zinc-300"
+                          ? "bg-zinc-900 text-white dark:bg-zinc-800 dark:text-white"
+                          : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                       }
                     `}
                   >
@@ -118,7 +118,7 @@ export default function Workflows() {
           </div>
 
           {/* workflow table  */}
-          <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
+          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-none">
 
             <div className="overflow-x-auto">
 
@@ -126,13 +126,13 @@ export default function Workflows() {
 
                 {/* table header  */}
                 <thead>
-                  <tr className="border-b border-zinc-800 bg-zinc-950">
+                  <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
 
-                    <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
+                    <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                       Workflow
                     </th>
 
-                    <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
+                    <th className="px-5 py-3.5 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                       Status
                     </th>
 
@@ -152,7 +152,7 @@ export default function Workflows() {
                 </thead>
 
                 {/* table body  */}
-                <tbody className="divide-y divide-zinc-800/70">
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/70">
 
                   {workflows.length > 0 ? (
 
@@ -160,7 +160,7 @@ export default function Workflows() {
 
                       <tr
                         key={wf.id}
-                        className="group transition-colors hover:bg-zinc-900/50"
+                        className="group transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                       >
 
                         {/* Workflow */}
@@ -171,23 +171,23 @@ export default function Workflows() {
                             className="group/link flex items-center gap-3"
                           >
 
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900">
-                              <Layers className="h-3.5 w-3.5 text-zinc-600" />
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+                              <Layers className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-600" />
                             </div>
 
                             <div className="min-w-0">
 
-                              <p className="truncate text-sm font-medium text-zinc-200 group-hover/link:text-white">
+                              <p className="truncate text-sm font-medium text-zinc-900 group-hover/link:text-black dark:text-zinc-200 dark:group-hover/link:text-white">
                                 {wf.prompt}
                               </p>
 
-                              <p className="mt-1 truncate text-[11px] text-zinc-700">
+                              <p className="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-600">
                                 ID: {wf.id}
                               </p>
 
                             </div>
 
-                            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover/link:text-zinc-400" />
+                            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-colors group-hover/link:text-zinc-700 dark:text-zinc-700 dark:group-hover/link:text-zinc-400" />
 
                           </Link>
 
@@ -201,11 +201,11 @@ export default function Workflows() {
                         {/* Records */}
                         <td className="px-5 py-4">
 
-                          <span className="text-sm text-zinc-400">
+                          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             {(wf.recordsCount ?? 0).toLocaleString()}
                           </span>
 
-                          <span className="ml-1 text-xs text-zinc-700">
+                          <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-600">
                             records
                           </span>
 
@@ -214,7 +214,7 @@ export default function Workflows() {
                         {/* Created */}
                         <td className="px-5 py-4">
 
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-zinc-500 dark:text-zinc-500">
                             {new Date(wf.createdAt).toLocaleDateString()}
                           </span>
 
@@ -230,7 +230,7 @@ export default function Workflows() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleCancel(wf.id)}
-                                className="h-8 px-2 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
+                                className="h-8 px-2 text-xs text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                               >
                                 <XCircle className="mr-1.5 h-3.5 w-3.5" />
                                 Cancel
@@ -241,7 +241,7 @@ export default function Workflows() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleRerun(wf.id)}
-                              className="h-8 px-2 text-xs text-zinc-500 hover:bg-zinc-900 hover:text-white"
+                              className="h-8 px-2 text-xs text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white"
                             >
                               <RotateCw className="mr-1.5 h-3.5 w-3.5" />
                               Rerun
@@ -251,7 +251,7 @@ export default function Workflows() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDelete(wf.id)}
-                              className="h-8 w-8 p-0 text-zinc-700 hover:bg-red-500/10 hover:text-red-400"
+                              className="h-8 w-8 p-0 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
@@ -275,11 +275,11 @@ export default function Workflows() {
                         {loading ? (
                           <div className="flex flex-col items-center">
 
-                            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900">
-                              <RotateCw className="h-4 w-4 animate-spin text-zinc-600" />
+                            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+                              <RotateCw className="h-4 w-4 animate-spin text-zinc-500 dark:text-zinc-600" />
                             </div>
 
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
                               Loading workflows...
                             </p>
 
@@ -287,15 +287,15 @@ export default function Workflows() {
                         ) : (
                           <div className="flex flex-col items-center">
 
-                            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900">
-                              <Layers className="h-4 w-4 text-zinc-700" />
+                            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+                              <Layers className="h-4 w-4 text-zinc-500 dark:text-zinc-600" />
                             </div>
 
-                            <p className="text-sm text-zinc-400">
+                            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                               No workflows found
                             </p>
 
-                            <p className="mt-1 text-xs text-zinc-700">
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
                               Try changing the status filter or create a new workflow.
                             </p>
 

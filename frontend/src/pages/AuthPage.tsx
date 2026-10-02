@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Auth } from "@/components/auth/auth";
 import { api } from "@/lib/api";
 import { UserCheck, Loader2, AlertCircle } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AuthPage() {
   const { path } = useParams();
@@ -26,7 +27,10 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
+      <div className="absolute top-5 right-5">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         {authError && (
           <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-xs flex items-start gap-2.5">
