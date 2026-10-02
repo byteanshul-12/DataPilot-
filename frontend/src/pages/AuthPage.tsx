@@ -1,13 +1,17 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Auth } from "@/components/auth/auth";
 import { api } from "@/lib/api";
-import { UserCheck, Loader2 } from "lucide-react";
+import { UserCheck, Loader2, AlertCircle } from "lucide-react";
 
 export default function AuthPage() {
   const { path } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loadingGuest, setLoadingGuest] = useState(false);
+
+  const authError = searchParams.get("error");
+  const authErrorDesc = searchParams.get("error_description");
 
   const handleGuestLogin = async () => {
     try {
@@ -24,6 +28,15 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
+        {authError && (
+          <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-xs flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+            <div>
+              <p className="font-medium text-red-300">Sign-in Notice: {authError.replace(/_/g, " ")}</p>
+              {authErrorDesc && <p className="mt-0.5 text-red-400/80">{authErrorDesc}</p>}
+            </div>
+          </div>
+        )}
         <Auth path={path} />
 
         <div className="mt-4 text-center">

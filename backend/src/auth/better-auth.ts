@@ -25,15 +25,22 @@ export const auth = betterAuth({
     process.env.FRONTEND_URL || '',
     ...(process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',').map((s) => s.trim()) : []),
   ].filter(Boolean),
+  account: {
+    accountLinking: {
+      enabled: true,
+    },
+    // Cross-site OAuth (Safari ITP / Chrome third-party cookie blocking):
+    // Verifies state cryptographically via PostgreSQL verification table
+    // without requiring Safari to send a cross-origin state cookie.
+    skipStateCookieCheck: true,
+  },
   advanced: {
     disableCSRFCheck: true,
     defaultCookieAttributes: {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       secure: process.env.NODE_ENV === 'production',
+      partitioned: true,
     },
-    // Extend OAuth state cookie to 10 minutes so it survives Render cold-start
-    // boot times (default is 5 minutes which can expire during a cold start).
-    cookiePrefix: 'better-auth',
   },
   // Redirect auth errors to the frontend sign-in page instead of the backend root
   onAPIError: {
